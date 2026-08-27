@@ -1,6 +1,16 @@
 import { pgTable, serial, varchar, text, timestamp, boolean, integer, date } from 'drizzle-orm/pg-core'
 import { sql, relations } from 'drizzle-orm'
 
+// USERS TABLE
+export const users = pgTable('users', {
+  id: serial('id').primaryKey(),
+  username: varchar('username', { length: 255 }).notNull().unique(),
+  password: varchar('password', { length: 255 }).notNull(), // Hashed with bcrypt
+  email: varchar('email', { length: 255 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
 // PROJECTS TABLE - Level 1
 export const projects = pgTable('projects', {
   id: serial('id').primaryKey(),
@@ -57,12 +67,10 @@ export const points = pgTable('points', {
 // COMMENTS TABLE - Can be on Projects, Modules, Stages, or Points
 export const comments = pgTable('comments', {
   id: serial('id').primaryKey(),
-  targetType: varchar('target_type', { length: 50 }).notNull(), // 'project', 'module', 'stage', 'point'
+  targetType: varchar('target_type', { length: 50 }).notNull(), // 'project', 'module', 'stage'
   targetId: serial('target_id').notNull(),
-  parentCommentId: serial('parent_comment_id'), // For threaded replies
-  author: varchar('author', { length: 255 }).notNull().default('board'),
+  userId: serial('user_id').notNull(),
   content: text('content').notNull(),
-  status: varchar('status', { length: 50 }).notNull().default('open'), // open, resolved, archived
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })

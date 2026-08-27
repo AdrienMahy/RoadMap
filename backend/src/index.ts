@@ -5,6 +5,8 @@ import projectsRouter from '@/routes/projects'
 import modulesRouter from '@/routes/modules'
 import stagesRouter from '@/routes/stages'
 import pointsRouter from '@/routes/points'
+import authRouter from '@/routes/auth'
+import commentsRouter from '@/routes/comments'
 import { db } from '@/db'
 
 dotenv.config()
@@ -26,6 +28,8 @@ app.use('/api/projects', projectsRouter)
 app.use('/api/modules', modulesRouter)
 app.use('/api/stages', stagesRouter)
 app.use('/api/points', pointsRouter)
+app.use('/api/auth', authRouter)
+app.use('/api/comments', commentsRouter)
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
