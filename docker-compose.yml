@@ -10,6 +10,7 @@ services:
       - "3102:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./backend/sql-dumps/backup.sql:/docker-entrypoint-initdb.d/backup.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U roadmap"]
       interval: 10s
