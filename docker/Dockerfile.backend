@@ -1,0 +1,25 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY backend/package*.json ./
+
+# Install dependencies
+RUN npm install --legacy-peer-deps
+
+# Copy config files
+COPY backend/tsconfig.json ./
+COPY backend/drizzle.config.ts ./
+
+# Copy source code
+COPY backend/src ./src
+
+# Expose port
+EXPOSE 3101
+
+# Start application using tsx (TypeScript runner)
+CMD ["npm", "run", "dev"]
+
+# Start application
+CMD ["npm", "start"]

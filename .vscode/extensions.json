@@ -1,0 +1,22 @@
+[
+  {
+    "name": "ESLint",
+    "publisher": "dbaeumer",
+    "recommendation": "recommended"
+  },
+  {
+    "name": "Prettier - Code formatter",
+    "publisher": "esbenp",
+    "recommendation": "recommended"
+  },
+  {
+    "name": "Tailwind CSS IntelliSense",
+    "publisher": "bradlc",
+    "recommendation": "recommended"
+  },
+  {
+    "name": "TypeScript Vue Plugin (Volar)",
+    "publisher": "Vue",
+    "recommendation": "recommended"
+  }
+]

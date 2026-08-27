@@ -1,0 +1,58 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: roadmap-db
+    environment:
+      POSTGRES_USER: roadmap
+      POSTGRES_PASSWORD: roadmap123
+      POSTGRES_DB: roadmap
+    ports:
+      - "3102:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U roadmap"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    container_name: roadmap-backend
+    environment:
+      DATABASE_URL: postgresql://roadmap:roadmap123@postgres:5432/roadmap
+      NODE_ENV: production
+      PORT: 3101
+      DEV_ACCESS_CODE: roadmap2026
+      TEAMS_WEBHOOK_URL: ${TEAMS_WEBHOOK_URL:-}
+    ports:
+      - "3101:3101"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    command: npm run dev
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+    container_name: roadmap-frontend
+    ports:
+      - "3100:80"
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: /api
+      VITE_DEV_ACCESS_CODE: roadmap2026
+
+volumes:
+  postgres_data:
+
+networks:
+  default:
+    name: roadmap-network
