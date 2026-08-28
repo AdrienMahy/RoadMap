@@ -2,7 +2,9 @@ import { useState, useEffect, useRef } from 'react'
 import { fetchProjects } from '../lib/api'
 import { Card } from '../components/Card'
 import { Badge } from '../components/Badge'
-import { ChevronDown, ChevronRight, CheckCircle, Clock, Zap, AlertCircle, AlertTriangle, AlertOctagon, Minus } from 'lucide-react'
+import { CommentsOffCanvas } from '../components/CommentsOffCanvas'
+import { useAuth } from '../contexts/AuthContext'
+import { ChevronDown, ChevronRight, CheckCircle, Clock, Zap, AlertCircle, AlertTriangle, AlertOctagon, Minus, MessageCircle } from 'lucide-react'
 import { getStatusColor, calculateStatus, getPriorityColor, getStatusBorderColor, getStatusIconName, getPriorityIconName, getStatusIconColor, getPriorityIconColor, getPriorityLabel } from '../lib/status'
 import { getIconByName } from '../lib/icons'
 
@@ -95,6 +97,7 @@ export default function BoardPage() {
   const [loading, setLoading] = useState(true)
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
+  const [commentsPanel, setCommentsPanel] = useState<{ isOpen: boolean; targetType: 'project' | 'module' | 'stage'; targetId: number; targetName?: string }>({ isOpen: false, targetType: 'project', targetId: 0 })
 
   useEffect(() => {
     loadProjects()
@@ -166,12 +169,24 @@ export default function BoardPage() {
               expandedItems={expandedItems}
               onToggleExpand={toggleExpand}
               onBack={() => setSelectedProject(null)}
+              onOpenComments={(targetType, targetId, targetName) => {
+                setCommentsPanel({ isOpen: true, targetType, targetId, targetName })
+              }}
             />
           </div>
         ) : (
           <ProjectGridView projects={projects} onSelectProject={handleSelectProject} />
         )}
       </div>
+
+      {/* Comments OffCanvas Panel */}
+      <CommentsOffCanvas
+        isOpen={commentsPanel.isOpen}
+        onClose={() => setCommentsPanel({ ...commentsPanel, isOpen: false })}
+        targetType={commentsPanel.targetType}
+        targetId={commentsPanel.targetId}
+        targetName={commentsPanel.targetName}
+      />
     </div>
   )
 }
@@ -227,11 +242,13 @@ function ProjectDetailView({
   expandedItems,
   onToggleExpand,
   onBack,
+  onOpenComments,
 }: {
   project: Project
   expandedItems: Set<string>
   onToggleExpand: (key: string) => void
   onBack: () => void
+  onOpenComments: (targetType: 'project' | 'module' | 'stage', targetId: number, targetName?: string) => void
 }) {
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -240,6 +257,7 @@ function ProjectDetailView({
           modules={project.modules}
           expandedItems={expandedItems}
           onToggleExpand={onToggleExpand}
+          onOpenComments={onOpenComments}
         />
       ) : (
         <div className="text-center text-dark-400">No modules yet</div>
@@ -252,10 +270,12 @@ function TimelineView({
   modules,
   expandedItems,
   onToggleExpand,
+  onOpenComments,
 }: {
   modules: Module[]
   expandedItems: Set<string>
   onToggleExpand: (key: string) => void
+  onOpenComments: (targetType: 'project' | 'module' | 'stage', targetId: number, targetName?: string) => void
 }) {
   const timelineContainerRef = useRef<HTMLDivElement>(null)
   const firstIncompleteRef = useRef<HTMLDivElement>(null)
@@ -388,6 +408,16 @@ function TimelineView({
                       <h3 className="text-base font-semibold text-white leading-tight">{stage.name}</h3>
                     </div>
                     <div className="flex items-center gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onOpenComments('stage', stage.id, stage.name)
+                        }}
+                        className="text-dark-400 hover:text-blue-400 transition p-1 rounded hover:bg-dark-700/50"
+                        title="Comments"
+                      >
+                        <MessageCircle size={16} />
+                      </button>
                       <span className="text-xs font-mono text-dark-500 bg-dark-700/50 px-2 py-1 rounded">
                         {stage.moduleName.substring(0, 2).toUpperCase()}
                       </span>
