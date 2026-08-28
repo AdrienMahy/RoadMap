@@ -21,6 +21,7 @@ import { Textarea } from '../components/Textarea'
 import { Badge } from '../components/Badge'
 import { IconPicker } from '../components/IconPicker'
 import { PrioritySelector } from '../components/PrioritySelector'
+import { UsersManagement } from '../components/UsersManagement'
 import { ChevronDown, ChevronRight, Trash2, Save, CheckCircle, Clock, Zap, AlertCircle, AlertTriangle, AlertOctagon, Minus } from 'lucide-react'
 import { getStatusColor, calculateStatus, getPriorityColor, getStatusBorderColor, getPriorityIcon, getStatusIconName, getPriorityIconName, getStatusIconColor, getPriorityIconColor, getPriorityLabel } from '../lib/status'
 import { getIconByName } from '../lib/icons'
@@ -277,6 +278,7 @@ export default function DevPage() {
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false)
   const [projectForm, setProjectForm] = useState({ name: '', description: '', status: 'planned' })
   const [selectedItem, setSelectedItem] = useState<{ type: 'project' | 'module' | 'stage' | 'point'; id: number } | null>(null)
+  const [activeTab, setActiveTab] = useState<'projects' | 'users'>('projects')
 
   useEffect(() => {
     loadProjects()
@@ -443,12 +445,38 @@ export default function DevPage() {
       <div className="max-w-8xl mx-auto">
         {/* Header */}
         <div className="border-b border-dark-700 p-6">
-          <h1 className="text-3xl font-bold text-white mb-2">👨‍💼 DEV Interface</h1>
-          <p className="text-dark-300">Manage your IT roadmap projects</p>
+          <h1 className="text-3xl font-bold text-white mb-4">👨‍💼 Admin Panel</h1>
+          
+          {/* Tabs */}
+          <div className="flex gap-2 border-b border-dark-600">
+            <button
+              onClick={() => setActiveTab('projects')}
+              className={`px-4 py-2 font-medium border-b-2 transition ${
+                activeTab === 'projects'
+                  ? 'text-blue-400 border-blue-400'
+                  : 'text-dark-400 border-transparent hover:text-dark-300'
+              }`}
+            >
+              📊 Projects
+            </button>
+            <button
+              onClick={() => setActiveTab('users')}
+              className={`px-4 py-2 font-medium border-b-2 transition ${
+                activeTab === 'users'
+                  ? 'text-blue-400 border-blue-400'
+                  : 'text-dark-400 border-transparent hover:text-dark-300'
+              }`}
+            >
+              👥 Users
+            </button>
+          </div>
         </div>
 
+        {/* Content based on active tab */}
+        {activeTab === 'projects' ? (
+          <>
         {/* Main Grid */}
-        <div className="grid grid-cols-3 gap-6 p-6 h-[calc(100vh-180px)]">
+        <div className="grid grid-cols-3 gap-6 p-6 h-[calc(100vh-220px)]">
           {/* Left Panel */}
           <div className="col-span-2 overflow-auto pr-4 space-y-4">
             {!showNewProjectDialog && (
@@ -593,6 +621,12 @@ export default function DevPage() {
             )}
           </div>
         </div>
+          </>
+        ) : (
+          <div className="p-6 h-[calc(100vh-220px)] overflow-auto">
+            <UsersManagement />
+          </div>
+        )}
       </div>
     </div>
   )

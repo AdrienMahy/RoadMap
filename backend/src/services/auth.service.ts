@@ -22,6 +22,7 @@ export interface AuthResponse {
   id: number
   username: string
   email?: string
+  role: string
   token: string
   expiresIn: string
 }
@@ -63,15 +64,16 @@ export class AuthService {
         password: hashedPassword,
         email: payload.email,
       })
-      .returning({ id: users.id, username: users.username, email: users.email })
+      .returning({ id: users.id, username: users.username, email: users.email, role: users.role })
 
     const user = newUser[0]
 
-    // Generate JWT
+    // Generate JWT with role
     const token = jwt.sign(
       {
         id: user.id,
         username: user.username,
+        role: user.role,
       },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRATION }
@@ -81,6 +83,7 @@ export class AuthService {
       id: user.id,
       username: user.username,
       email: user.email,
+      role: user.role,
       token,
       expiresIn: JWT_EXPIRATION,
     }
@@ -106,11 +109,12 @@ export class AuthService {
       throw new Error('Invalid credentials')
     }
 
-    // Generate JWT
+    // Generate JWT with role
     const token = jwt.sign(
       {
         id: user.id,
         username: user.username,
+        role: user.role,
       },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRATION }
@@ -120,14 +124,15 @@ export class AuthService {
       id: user.id,
       username: user.username,
       email: user.email,
+      role: user.role,
       token,
       expiresIn: JWT_EXPIRATION,
     }
   }
 
-  async verifyToken(token: string): Promise<{ id: number; username: string }> {
+  async verifyToken(token: string): Promise<{ id: number; username: string; role: string }> {
     try {
-      const decoded = jwt.verify(token, JWT_SECRET) as { id: number; username: string }
+      const decoded = jwt.verify(token, JWT_SECRET) as { id: number; username: string; role: string }
       return decoded
     } catch (error) {
       throw new Error('Invalid or expired token')
@@ -140,6 +145,49 @@ export class AuthService {
       throw new Error('User not found')
     }
     return userList[0]
+  }
+
+  // User management methods
+  async getAllUsers() {
+    const allUsers = await db.select({
+      id: users.id,
+      username: users.username,
+      email: users.email,
+      role: users.role,
+      createdAt: users.createdAt,
+    }).from(users)
+    return allUsers
+  }
+
+  async updateUserRole(userId: number, newRole: string) {
+    if (!['Administrateur', 'Board'].includes(newRole)) {
+      throw new Error('Invalid role. Must be either "Administrateur" or "Board"')
+    }
+
+    const updated = await db
+      .update(users)
+      .set({ role: newRole })
+      .where(eq(users.id, userId))
+      .returning({ id: users.id, username: users.username, email: users.email, role: users.role })
+
+    if (updated.length === 0) {
+      throw new Error('User not found')
+    }
+
+    return updated[0]
+  }
+
+  async deleteUser(userId: number) {
+    const result = await db
+      .delete(users)
+      .where(eq(users.id, userId))
+      .returning({ id: users.id, username: users.username })
+
+    if (result.length === 0) {
+      throw new Error('User not found')
+    }
+
+    return result[0]
   }
 }
 

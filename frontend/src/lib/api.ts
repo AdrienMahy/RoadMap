@@ -103,3 +103,20 @@ export async function updatePoint(id: number, updates: any) {
 export async function deletePoint(id: number) {
   await api.delete(`/points/${id}`)
 }
+
+// Users Management
+export async function fetchAllUsers() {
+  const { data } = await api.get('/auth/users')
+  return data
+}
+
+export async function updateUserRole(userId: number, role: string) {
+  const { data } = await api.put(`/auth/users/${userId}/role`, { role })
+  return data
+}
+
+export async function deleteUser(userId: number) {
+  const { data } = await api.delete(`/auth/users/${userId}`)
+  return data
+}
+

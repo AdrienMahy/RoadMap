@@ -2,9 +2,10 @@ import React, { createContext, useContext, useState, useEffect } from 'react'
 import { AuthAPI, AuthUser, AuthCredentials } from '@/lib/auth'
 
 interface AuthContextType {
-  user: AuthUser | null
+  user: (AuthUser & { role: string }) | null
   isLoading: boolean
   isAuthenticated: boolean
+  isAdmin: boolean
   login: (username: string, password: string) => Promise<void>
   register: (credentials: AuthCredentials) => Promise<void>
   logout: () => void
@@ -14,7 +15,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null)
+  const [user, setUser] = useState<(AuthUser & { role: string }) | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   // Verify token on mount
@@ -44,6 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       id: response.id,
       username: response.username,
       email: response.email,
+      role: response.role,
     })
   }
 
@@ -54,6 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       id: response.id,
       username: response.username,
       email: response.email,
+      role: response.role,
     })
   }
 
@@ -63,6 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const getToken = () => AuthAPI.getStoredToken()
+  const isAdmin = user?.role === 'Administrateur'
 
   return (
     <AuthContext.Provider
@@ -70,6 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         isLoading,
         isAuthenticated: !!user,
+        isAdmin,
         login,
         register,
         logout,

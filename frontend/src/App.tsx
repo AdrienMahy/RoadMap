@@ -8,12 +8,18 @@ import DevPage from './pages/DevPage'
 import AuthPage from './pages/AuthPage'
 
 function AppContent() {
-  const { user, logout } = useAuth()
+  const { user, logout, isAdmin } = useAuth()
   const [isDev, setIsDev] = useState(false)
   const [accessCode, setAccessCode] = useState('')
   const [error, setError] = useState('')
 
   const handleAccessDev = (code: string) => {
+    // Only allow dev access if user is admin
+    if (!isAdmin) {
+      setError('Vous n\'avez pas les permissions pour accéder au panneau admin')
+      return
+    }
+
     const devCode = import.meta.env.VITE_DEV_ACCESS_CODE || 'roadmap2026'
     if (code === devCode) {
       setIsDev(true)
@@ -68,15 +74,17 @@ function AppContent() {
             </div>
             <div className="flex items-center gap-3">
               <span className="text-sm text-dark-400">Hello, {user.username}</span>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setIsDev(true)}
-                className="flex items-center gap-2"
-              >
-                <Lock size={16} />
-                Admin
-              </Button>
+              {isAdmin && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setIsDev(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Lock size={16} />
+                  Admin
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="sm"

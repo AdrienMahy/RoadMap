@@ -69,4 +69,45 @@ router.post('/verify', async (req, res) => {
   }
 })
 
+// GET /api/auth/users - List all users (admin only)
+router.get('/users', async (req, res) => {
+  try {
+    const allUsers = await authService.getAllUsers()
+    res.json(allUsers)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch users'
+    res.status(500).json({ error: message })
+  }
+})
+
+// PUT /api/auth/users/:id/role - Update user role (admin only)
+router.put('/users/:id/role', async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id)
+    const { role } = req.body
+
+    if (!role) {
+      return res.status(400).json({ error: 'Role is required' })
+    }
+
+    const updatedUser = await authService.updateUserRole(userId, role)
+    res.json(updatedUser)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to update user role'
+    res.status(400).json({ error: message })
+  }
+})
+
+// DELETE /api/auth/users/:id - Delete user (admin only)
+router.delete('/users/:id', async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id)
+    const deletedUser = await authService.deleteUser(userId)
+    res.json({ message: `User ${deletedUser.username} deleted successfully`, user: deletedUser })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to delete user'
+    res.status(400).json({ error: message })
+  }
+})
+
 export default router
