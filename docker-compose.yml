@@ -34,10 +34,7 @@ services:
       postgres:
         condition: service_healthy
     volumes:
-      - ./backend/src:/app/src
-      - ./backend/drizzle.config.ts:/app/drizzle.config.ts
-      - ./backend/tsconfig.json:/app/tsconfig.json
-      - /app/node_modules
+      - ./backend/src:/app/src:ro
     command: npm run dev
 
   frontend:

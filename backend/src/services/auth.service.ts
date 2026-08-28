@@ -1,8 +1,8 @@
 import { db } from '../db'
 import { users } from '../db/schema'
 import { eq } from 'drizzle-orm'
-import * as bcrypt from 'bcryptjs'
-import * as jwt from 'jsonwebtoken'
+import { createHash, randomBytes, pbkdf2Sync } from 'crypto'
+import jwt from 'jsonwebtoken'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'roadmap-secret-key-2026'
 const JWT_EXPIRATION = '30m' // 30 minutes
@@ -26,6 +26,19 @@ export interface AuthResponse {
   expiresIn: string
 }
 
+// Simple password hashing with PBKDF2
+function hashPassword(password: string): string {
+  const salt = randomBytes(16).toString('hex')
+  const hash = pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex')
+  return `${salt}:${hash}`
+}
+
+function verifyPassword(password: string, hashed: string): boolean {
+  const [salt, hash] = hashed.split(':')
+  const computedHash = pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex')
+  return computedHash === hash
+}
+
 export class AuthService {
   async register(payload: RegisterPayload): Promise<AuthResponse> {
     // Check if user already exists
@@ -40,7 +53,7 @@ export class AuthService {
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(payload.password, 10)
+    const hashedPassword = hashPassword(payload.password)
 
     // Create user
     const newUser = await db
@@ -88,7 +101,7 @@ export class AuthService {
     const user = userList[0]
 
     // Check password
-    const isPasswordValid = await bcrypt.compare(payload.password, user.password)
+    const isPasswordValid = verifyPassword(payload.password, user.password)
     if (!isPasswordValid) {
       throw new Error('Invalid credentials')
     }
