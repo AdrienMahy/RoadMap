@@ -7,7 +7,8 @@ import stagesRouter from '@/routes/stages'
 import pointsRouter from '@/routes/points'
 import authRouter from '@/routes/auth'
 import commentsRouter from '@/routes/comments'
-import { db } from '@/db'
+import notificationsRouter from '@/routes/notifications'
+import { db, runMigrations } from '@/db'
 
 dotenv.config()
 
@@ -30,6 +31,7 @@ app.use('/api/stages', stagesRouter)
 app.use('/api/points', pointsRouter)
 app.use('/api/auth', authRouter)
 app.use('/api/comments', commentsRouter)
+app.use('/api/notifications', notificationsRouter)
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -41,7 +43,21 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   })
 })
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`)
-  console.log(`📊 API: http://localhost:${PORT}/api`)
-})
+// Start server
+async function startServer() {
+  try {
+    // Run migrations
+    await runMigrations()
+    
+    // Start listening
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`)
+      console.log(`📊 API: http://localhost:${PORT}/api`)
+    })
+  } catch (error) {
+    console.error('Failed to start server:', error)
+    process.exit(1)
+  }
+}
+
+startServer()

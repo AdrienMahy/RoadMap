@@ -28,8 +28,8 @@ export async function notifyTeamsNewComment(payload: CommentNotificationPayload)
   }[payload.targetType]
 
   const message = {
-    @type: 'MessageCard',
-    @context: 'https://schema.org/extensions',
+    '@type': 'MessageCard',
+    '@context': 'https://schema.org/extensions',
     summary: `New comment on ${payload.targetType}: ${payload.targetName}`,
     themeColor: color,
     sections: [
@@ -55,7 +55,7 @@ export async function notifyTeamsNewComment(payload: CommentNotificationPayload)
     ],
     potentialAction: [
       {
-        @type: 'OpenUri',
+        '@type': 'OpenUri',
         name: 'View Comment',
         targets: [
           {
@@ -90,8 +90,8 @@ export async function notifyTeamsStatusChange(
   }
 
   const message = {
-    @type: 'MessageCard',
-    @context: 'https://schema.org/extensions',
+    '@type': 'MessageCard',
+    '@context': 'https://schema.org/extensions',
     summary: `${targetType} status changed: ${oldStatus} → ${newStatus}`,
     themeColor: '0078D4',
     sections: [
@@ -112,7 +112,7 @@ export async function notifyTeamsStatusChange(
     ],
     potentialAction: [
       {
-        @type: 'OpenUri',
+        '@type': 'OpenUri',
         name: 'View Details',
         targets: [
           {

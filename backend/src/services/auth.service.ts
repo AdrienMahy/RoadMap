@@ -11,6 +11,8 @@ export interface RegisterPayload {
   username: string
   password: string
   email?: string
+  firstName?: string
+  lastName?: string
 }
 
 export interface LoginPayload {
@@ -22,6 +24,8 @@ export interface AuthResponse {
   id: number
   username: string
   email?: string
+  firstName?: string
+  lastName?: string
   role: string
   token: string
   expiresIn: string
@@ -63,8 +67,10 @@ export class AuthService {
         username: payload.username,
         password: hashedPassword,
         email: payload.email,
+        firstName: payload.firstName,
+        lastName: payload.lastName,
       })
-      .returning({ id: users.id, username: users.username, email: users.email, role: users.role })
+      .returning({ id: users.id, username: users.username, email: users.email, firstName: users.firstName, lastName: users.lastName, role: users.role })
 
     const user = newUser[0]
 
@@ -83,6 +89,8 @@ export class AuthService {
       id: user.id,
       username: user.username,
       email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
       role: user.role,
       token,
       expiresIn: JWT_EXPIRATION,
@@ -124,6 +132,8 @@ export class AuthService {
       id: user.id,
       username: user.username,
       email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
       role: user.role,
       token,
       expiresIn: JWT_EXPIRATION,

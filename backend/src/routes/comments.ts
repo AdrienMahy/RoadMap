@@ -44,15 +44,16 @@ router.get('/', async (req, res) => {
 // POST /api/comments
 router.post('/', verifyAuth, async (req: any, res: any) => {
   try {
-    const { targetType, targetId, content } = req.body
+    const { targetType, targetId, projectId, content } = req.body
 
-    if (!targetType || !targetId || !content) {
-      return res.status(400).json({ error: 'Missing required fields' })
+    if (!targetType || !targetId || !projectId || !content) {
+      return res.status(400).json({ error: 'Missing required fields: targetType, targetId, projectId, content' })
     }
 
     const result = await commentsService.createComment({
       targetType,
       targetId,
+      projectId,
       userId: req.user.id,
       content,
     })

@@ -1,8 +1,8 @@
 CREATE TABLE IF NOT EXISTS "comments" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"target_type" varchar(50) NOT NULL,
-	"target_id" serial NOT NULL,
-	"user_id" serial NOT NULL,
+	"target_id" integer NOT NULL,
+	"user_id" integer NOT NULL,
 	"content" text NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL
@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS "comments" (
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "modules" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"project_id" serial NOT NULL,
+	"project_id" integer NOT NULL,
 	"name" varchar(255) NOT NULL,
 	"description" text,
 	"status" varchar(50) DEFAULT 'planned' NOT NULL,
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS "modules" (
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "points" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"stage_id" serial NOT NULL,
+	"stage_id" integer NOT NULL,
 	"name" varchar(255) NOT NULL,
 	"description" text,
 	"completed" boolean DEFAULT false NOT NULL,
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS "projects" (
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "stages" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"module_id" serial NOT NULL,
+	"module_id" integer NOT NULL,
 	"name" varchar(255) NOT NULL,
 	"description" text,
 	"delivery_date" date,
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS "stages" (
 CREATE TABLE IF NOT EXISTS "update_history" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"target_type" varchar(50) NOT NULL,
-	"target_id" serial NOT NULL,
+	"target_id" integer NOT NULL,
 	"action" varchar(100) NOT NULL,
 	"old_value" text,
 	"new_value" text,

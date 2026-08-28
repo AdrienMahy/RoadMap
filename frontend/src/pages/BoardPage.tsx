@@ -97,11 +97,66 @@ export default function BoardPage() {
   const [loading, setLoading] = useState(true)
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
-  const [commentsPanel, setCommentsPanel] = useState<{ isOpen: boolean; targetType: 'project' | 'module' | 'stage'; targetId: number; targetName?: string }>({ isOpen: false, targetType: 'project', targetId: 0 })
+  const [commentsPanel, setCommentsPanel] = useState<{ isOpen: boolean; targetType: 'project' | 'module' | 'stage'; targetId: number; projectId: number; targetName?: string }>({ isOpen: false, targetType: 'project', targetId: 0, projectId: 0 })
 
   useEffect(() => {
     loadProjects()
   }, [])
+
+  // Listen for notification clicks to open comments
+  useEffect(() => {
+    const handleViewNotification = (event: Event) => {
+      console.log('📥 Received viewNotification event:', event)
+      const customEvent = event as CustomEvent
+      const { targetType, targetId, projectId } = customEvent.detail
+      console.log('Event details:', { targetType, targetId, projectId })
+
+      if (!projectId) {
+        console.error('No projectId in notification')
+        return
+      }
+
+      // Load the full project with hierarchy
+      const loadProject = async () => {
+        try {
+          console.log('Loading project:', projectId)
+          const response = await fetch(`/api/projects/${projectId}`)
+          const result = await response.json()
+          const loadedProject = result.data
+          
+          console.log('Project loaded successfully')
+          
+          // Update selected project
+          setSelectedProject(loadedProject)
+          
+          // Reset expanded items
+          setExpandedItems(new Set())
+          
+          // Open comments panel with loaded project
+          setCommentsPanel({
+            isOpen: true,
+            targetType,
+            targetId,
+            projectId,
+            targetName: undefined,
+          })
+        } catch (error) {
+          console.error('Failed to load project:', error)
+        }
+      }
+      
+      loadProject()
+    }
+
+    console.log('✅ Setting up viewNotification listener')
+    window.addEventListener('viewNotification', handleViewNotification as EventListener)
+    return () => {
+      console.log('🛑 Removing viewNotification listener')
+      window.removeEventListener('viewNotification', handleViewNotification as EventListener)
+    }
+  }, [projects])
+
+
 
   async function loadProjects() {
     try {
@@ -170,7 +225,7 @@ export default function BoardPage() {
               onToggleExpand={toggleExpand}
               onBack={() => setSelectedProject(null)}
               onOpenComments={(targetType, targetId, targetName) => {
-                setCommentsPanel({ isOpen: true, targetType, targetId, targetName })
+                setCommentsPanel({ isOpen: true, targetType, targetId, projectId: selectedProject?.id || 0, targetName })
               }}
             />
           </div>
@@ -185,6 +240,7 @@ export default function BoardPage() {
         onClose={() => setCommentsPanel({ ...commentsPanel, isOpen: false })}
         targetType={commentsPanel.targetType}
         targetId={commentsPanel.targetId}
+        projectId={commentsPanel.projectId}
         targetName={commentsPanel.targetName}
       />
     </div>
@@ -198,6 +254,8 @@ function ProjectGridView({
   projects: Project[]
   onSelectProject: (project: Project) => void
 }) {
+  const { user } = useAuth()
+
   if (projects.length === 0) {
     return (
       <div className="text-center text-dark-400 py-12">
@@ -207,7 +265,19 @@ function ProjectGridView({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="space-y-6">
+      {/* Welcome Message */}
+      <div className="bg-gradient-to-r from-red-950/30 to-dark-900 border border-red-900/30 rounded-lg p-6">
+        <h2 className="text-2xl font-bold text-white">
+          Welcome, {user?.firstName || user?.username}! 👋
+        </h2>
+        <p className="text-dark-300 mt-2">
+          Browse your projects and collaborate with your team.
+        </p>
+      </div>
+
+      {/* Projects Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {projects.map((project) => (
         <Card
           key={project.id}
@@ -233,6 +303,7 @@ function ProjectGridView({
           </div>
         </Card>
       ))}
+      </div>
     </div>
   )
 }

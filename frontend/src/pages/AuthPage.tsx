@@ -9,6 +9,8 @@ export default function AuthPage() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [email, setEmail] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
@@ -21,7 +23,7 @@ export default function AuthPage() {
       if (isLogin) {
         await login(username, password)
       } else {
-        await register({ username, password, email: email || undefined })
+        await register({ username, password, email: email || undefined, firstName: firstName || undefined, lastName: lastName || undefined })
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
@@ -50,16 +52,40 @@ export default function AuthPage() {
             </div>
 
             {!isLogin && (
-              <div>
-                <label className="block text-sm font-medium mb-2">Email (optional)</label>
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
-                  disabled={isLoading}
-                />
-              </div>
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">First Name (optional)</label>
+                    <Input
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="First name"
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Last Name (optional)</label>
+                    <Input
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder="Last name"
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Email (optional)</label>
+                  <Input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    disabled={isLoading}
+                  />
+                </div>
+              </>
             )}
 
             <div>

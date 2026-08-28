@@ -6,7 +6,7 @@ const router = Router()
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {
-    const { username, password, email } = req.body
+    const { username, password, email, firstName, lastName } = req.body
 
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password are required' })
@@ -16,6 +16,8 @@ router.post('/register', async (req, res) => {
       username,
       password,
       email,
+      firstName,
+      lastName,
     })
 
     res.json(result)
@@ -62,6 +64,9 @@ router.post('/verify', async (req, res) => {
       id: user.id,
       username: user.username,
       email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Token verification failed'

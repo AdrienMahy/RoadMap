@@ -9,6 +9,15 @@ export const api = axios.create({
   },
 })
 
+// Add JWT token to all requests
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('auth_token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
 // Projects
 export async function fetchProjects() {
   const { data } = await api.get('/projects')

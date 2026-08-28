@@ -8,11 +8,15 @@ export interface Comment {
   content: string
   createdAt: string
   updatedAt: string
+  userName?: string
+  firstName?: string
+  lastName?: string
 }
 
 export interface CreateCommentPayload {
   targetType: 'project' | 'module' | 'stage'
   targetId: number
+  projectId: number
   content: string
 }
 

@@ -7,6 +7,8 @@ export const users = pgTable('users', {
   username: varchar('username', { length: 255 }).notNull().unique(),
   password: varchar('password', { length: 255 }).notNull(), // Hashed with bcrypt
   email: varchar('email', { length: 255 }),
+  firstName: varchar('first_name', { length: 255 }),
+  lastName: varchar('last_name', { length: 255 }),
   role: varchar('role', { length: 50 }).notNull().default('Board'), // 'Administrateur' or 'Board'
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -26,7 +28,7 @@ export const projects = pgTable('projects', {
 // MODULES TABLE - Level 2
 export const modules = pgTable('modules', {
   id: serial('id').primaryKey(),
-  projectId: serial('project_id').notNull(),
+  projectId: integer('project_id').notNull(),
   name: varchar('name', { length: 255 }).notNull(),
   description: text('description'),
   status: varchar('status', { length: 50 }).notNull().default('planned'),
@@ -40,7 +42,7 @@ export const modules = pgTable('modules', {
 // STAGES TABLE - Level 3 (Étapes)
 export const stages = pgTable('stages', {
   id: serial('id').primaryKey(),
-  moduleId: serial('module_id').notNull(),
+  moduleId: integer('module_id').notNull(),
   name: varchar('name', { length: 255 }).notNull(),
   description: text('description'),
   deliveryDate: date('delivery_date'),
@@ -55,7 +57,7 @@ export const stages = pgTable('stages', {
 // POINTS TABLE - Level 4
 export const points = pgTable('points', {
   id: serial('id').primaryKey(),
-  stageId: serial('stage_id').notNull(),
+  stageId: integer('stage_id').notNull(),
   name: varchar('name', { length: 255 }).notNull(),
   description: text('description'),
   completed: boolean('completed').notNull().default(false),
@@ -69,18 +71,32 @@ export const points = pgTable('points', {
 export const comments = pgTable('comments', {
   id: serial('id').primaryKey(),
   targetType: varchar('target_type', { length: 50 }).notNull(), // 'project', 'module', 'stage'
-  targetId: serial('target_id').notNull(),
-  userId: serial('user_id').notNull(),
+  targetId: integer('target_id').notNull(),
+  userId: integer('user_id').notNull(),
   content: text('content').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+// NOTIFICATIONS TABLE
+export const notifications = pgTable('notifications', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull(), // Who receives the notification
+  type: varchar('type', { length: 50 }).notNull(), // 'comment_added', 'comment_edited', 'comment_deleted', 'project_created', etc.
+  targetType: varchar('target_type', { length: 50 }), // 'project', 'module', 'stage'
+  targetId: integer('target_id'), // ID of the project/module/stage/comment
+  projectId: integer('project_id').notNull().default(1), // Which project this notification relates to
+  relatedUserId: integer('related_user_id'), // Who triggered the notification
+  message: varchar('message', { length: 255 }).notNull(),
+  read: boolean('read').notNull().default(false),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
 // UPDATES/HISTORY TABLE
 export const updateHistory = pgTable('update_history', {
   id: serial('id').primaryKey(),
   targetType: varchar('target_type', { length: 50 }).notNull(), // 'project', 'module', 'stage', 'point'
-  targetId: serial('target_id').notNull(),
+  targetId: integer('target_id').notNull(),
   action: varchar('action', { length: 100 }).notNull(), // 'created', 'updated', 'deleted', 'status_changed'
   oldValue: text('old_value'),
   newValue: text('new_value'),

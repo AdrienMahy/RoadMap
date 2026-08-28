@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react'
-import { X, Send, Trash2, Edit2, Check } from 'lucide-react'
+import { X, Send, Trash2, Edit2, Check, User } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { CommentsAPI, Comment } from '@/lib/comments'
 import { Button } from '@/components/Button'
 import { Textarea } from '@/components/Textarea'
+import { getAvatarColor, getInitials } from '@/lib/avatar'
 
 interface CommentsOffCanvasProps {
   isOpen: boolean
   onClose: () => void
   targetType: 'project' | 'module' | 'stage'
   targetId: number
+  projectId: number
   targetName?: string
 }
 
@@ -18,6 +20,7 @@ export function CommentsOffCanvas({
   onClose,
   targetType,
   targetId,
+  projectId,
   targetName,
 }: CommentsOffCanvasProps) {
   const { user, getToken, isAuthenticated } = useAuth()
@@ -56,6 +59,7 @@ export function CommentsOffCanvas({
         {
           targetType,
           targetId,
+          projectId,
           content: newComment,
         },
         token
@@ -116,9 +120,9 @@ export function CommentsOffCanvas({
       />
 
       {/* OffCanvas Drawer */}
-      <div className="fixed right-0 top-0 h-screen w-96 bg-dark-900 border-l border-dark-800 z-50 flex flex-col shadow-xl">
+      <div className="fixed right-0 top-0 h-screen w-96 bg-dark-900 border-l border-red-900/30 z-50 flex flex-col shadow-xl">
         {/* Header */}
-        <div className="p-6 border-b border-dark-800 flex justify-between items-center">
+        <div className="p-6 border-b border-red-900/30 bg-gradient-to-r from-red-950/40 to-dark-900 flex justify-between items-center">
           <div>
             <h2 className="text-lg font-bold">Comments</h2>
             {targetName && (
@@ -143,12 +147,18 @@ export function CommentsOffCanvas({
             comments.map((comment) => (
               <div
                 key={comment.id}
-                className="bg-dark-800 rounded p-3 space-y-2"
+                className="bg-dark-800 border border-red-900/20 rounded p-3 space-y-2"
               >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
+                <div className="flex justify-between items-start gap-3">
+                  {/* Avatar */}
+                  <div className={`flex-shrink-0 ${getAvatarColor(comment.firstName).bg} w-8 h-8 rounded-full flex items-center justify-center`}>
+                    <User size={16} className={getAvatarColor(comment.firstName).text} />
+                  </div>
+
+                  {/* User info */}
+                  <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm text-dark-100">
-                      @{comment.userId}
+                      @{comment.firstName || comment.userName || `User${comment.userId}`}
                     </p>
                     <p className="text-xs text-dark-500">
                       {new Date(comment.createdAt).toLocaleString()}
@@ -157,13 +167,13 @@ export function CommentsOffCanvas({
 
                   {/* Edit/Delete buttons */}
                   {user?.id === comment.userId && editingId !== comment.id && (
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 flex-shrink-0">
                       <button
                         onClick={() => {
                           setEditingId(comment.id)
                           setEditContent(comment.content)
                         }}
-                        className="text-dark-400 hover:text-blue-400 transition"
+                        className="text-dark-400 hover:text-red-400 transition"
                       >
                         <Edit2 size={14} />
                       </button>
@@ -212,7 +222,7 @@ export function CommentsOffCanvas({
         </div>
 
         {/* New comment form */}
-        <div className="p-6 border-t border-dark-800 space-y-3">
+        <div className="p-6 border-t border-red-900/30 space-y-3 bg-gradient-to-b from-transparent to-red-950/10">
           {error && <div className="text-red-500 text-sm">{error}</div>}
 
           {!isAuthenticated ? (

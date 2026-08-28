@@ -2,7 +2,9 @@ import React, { useState } from 'react'
 import { Lock, LogOut } from 'lucide-react'
 import { Button } from './components/Button'
 import { Input } from './components/Input'
+import { NotificationBell } from './components/NotificationBell'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { NotificationsProvider } from './contexts/NotificationsContext'
 import BoardPage from './pages/BoardPage'
 import DevPage from './pages/DevPage'
 import AuthPage from './pages/AuthPage'
@@ -42,8 +44,9 @@ function AppContent() {
         <header className="border-b border-dark-800 sticky top-0 z-40 bg-dark-950/95 backdrop-blur">
           <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
             <h1 className="text-2xl font-bold">Roadmap Admin</h1>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <span className="text-sm text-dark-400">Logged in as {user.username}</span>
+              <NotificationBell />
               <Button variant="secondary" size="sm" onClick={() => setIsDev(false)}>
                 Back to Board
               </Button>
@@ -74,6 +77,7 @@ function AppContent() {
             </div>
             <div className="flex items-center gap-3">
               <span className="text-sm text-dark-400">Hello, {user.username}</span>
+              <NotificationBell />
               {isAdmin && (
                 <Button
                   variant="secondary"
@@ -142,7 +146,9 @@ function AppContent() {
 export default function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <NotificationsProvider>
+        <AppContent />
+      </NotificationsProvider>
     </AuthProvider>
   )
 }

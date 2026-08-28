@@ -22,7 +22,7 @@ import { Badge } from '../components/Badge'
 import { IconPicker } from '../components/IconPicker'
 import { PrioritySelector } from '../components/PrioritySelector'
 import { UsersManagement } from '../components/UsersManagement'
-import { ChevronDown, ChevronRight, Trash2, Save, CheckCircle, Clock, Zap, AlertCircle, AlertTriangle, AlertOctagon, Minus } from 'lucide-react'
+import { ChevronDown, ChevronRight, Trash2, Save, CheckCircle, Clock, Zap, AlertCircle, AlertTriangle, AlertOctagon, Minus, BarChart3, Users, ShieldAlert } from 'lucide-react'
 import { getStatusColor, calculateStatus, getPriorityColor, getStatusBorderColor, getPriorityIcon, getStatusIconName, getPriorityIconName, getStatusIconColor, getPriorityIconColor, getPriorityLabel } from '../lib/status'
 import { getIconByName } from '../lib/icons'
 
@@ -444,30 +444,35 @@ export default function DevPage() {
     <div className="min-h-screen bg-gradient-to-br from-dark-900 via-dark-950 to-dark-900">
       <div className="max-w-8xl mx-auto">
         {/* Header */}
-        <div className="border-b border-dark-700 p-6">
-          <h1 className="text-3xl font-bold text-white mb-4">👨‍💼 Admin Panel</h1>
+        <div className="border-b border-red-900/30 bg-gradient-to-r from-red-950/40 to-dark-900 p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <ShieldAlert size={32} className="text-red-500" />
+            <h1 className="text-3xl font-bold text-white">Admin Panel</h1>
+          </div>
           
           {/* Tabs */}
-          <div className="flex gap-2 border-b border-dark-600">
+          <div className="flex gap-2 border-b border-red-900/30">
             <button
               onClick={() => setActiveTab('projects')}
-              className={`px-4 py-2 font-medium border-b-2 transition ${
+              className={`px-4 py-2 font-medium border-b-2 transition flex items-center gap-2 ${
                 activeTab === 'projects'
-                  ? 'text-blue-400 border-blue-400'
+                  ? 'text-red-400 border-red-400'
                   : 'text-dark-400 border-transparent hover:text-dark-300'
               }`}
             >
-              📊 Projects
+              <BarChart3 size={18} />
+              Projects
             </button>
             <button
               onClick={() => setActiveTab('users')}
-              className={`px-4 py-2 font-medium border-b-2 transition ${
+              className={`px-4 py-2 font-medium border-b-2 transition flex items-center gap-2 ${
                 activeTab === 'users'
-                  ? 'text-blue-400 border-blue-400'
+                  ? 'text-red-400 border-red-400'
                   : 'text-dark-400 border-transparent hover:text-dark-300'
               }`}
             >
-              👥 Users
+              <Users size={18} />
+              Users
             </button>
           </div>
         </div>

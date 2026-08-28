@@ -4,12 +4,16 @@ export interface AuthCredentials {
   username: string
   password: string
   email?: string
+  firstName?: string
+  lastName?: string
 }
 
 export interface AuthUser {
   id: number
   username: string
   email?: string
+  firstName?: string
+  lastName?: string
   role: string
 }
 
@@ -17,6 +21,8 @@ export interface AuthResponse {
   id: number
   username: string
   email?: string
+  firstName?: string
+  lastName?: string
   role: string
   token: string
   expiresIn: string

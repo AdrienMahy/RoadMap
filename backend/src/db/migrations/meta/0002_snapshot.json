@@ -1,4 +1,6 @@
 {
+  "id": "f75c0b53-3c86-4561-b2ce-3bef15e0d00a",
+  "prevId": "7a58b058-5620-4b6c-ae89-2e21b845ef7a",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -56,8 +58,8 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "isRLSEnabled": false,
-      "checkConstraints": {}
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
     "public.modules": {
       "name": "modules",
@@ -134,8 +136,77 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "isRLSEnabled": false,
-      "checkConstraints": {}
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.notifications": {
+      "name": "notifications",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "serial",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_type": {
+          "name": "target_type",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_id": {
+          "name": "target_id",
+          "type": "serial",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "related_user_id": {
+          "name": "related_user_id",
+          "type": "serial",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "message": {
+          "name": "message",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "read": {
+          "name": "read",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
     "public.points": {
       "name": "points",
@@ -206,8 +277,8 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "isRLSEnabled": false,
-      "checkConstraints": {}
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
     "public.projects": {
       "name": "projects",
@@ -265,8 +336,8 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "isRLSEnabled": false,
-      "checkConstraints": {}
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
     "public.stages": {
       "name": "stages",
@@ -349,8 +420,8 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "isRLSEnabled": false,
-      "checkConstraints": {}
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
     "public.update_history": {
       "name": "update_history",
@@ -412,8 +483,8 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "isRLSEnabled": false,
-      "checkConstraints": {}
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
     "public.users": {
       "name": "users",
@@ -443,6 +514,25 @@
           "primaryKey": false,
           "notNull": false
         },
+        "first_name": {
+          "name": "first_name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_name": {
+          "name": "last_name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "role": {
+          "name": "role",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'Board'"
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -464,28 +554,26 @@
       "uniqueConstraints": {
         "users_username_unique": {
           "name": "users_username_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "username"
-          ],
-          "nullsNotDistinct": false
+          ]
         }
       },
       "policies": {},
-      "isRLSEnabled": false,
-      "checkConstraints": {}
+      "checkConstraints": {},
+      "isRLSEnabled": false
     }
   },
   "enums": {},
   "schemas": {},
-  "_meta": {
-    "schemas": {},
-    "tables": {},
-    "columns": {}
-  },
-  "id": "1512a09b-f162-4b10-a593-09ee0ff2c47a",
-  "prevId": "00000000-0000-0000-0000-000000000000",
   "sequences": {},
+  "roles": {},
   "policies": {},
   "views": {},
-  "roles": {}
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
 }

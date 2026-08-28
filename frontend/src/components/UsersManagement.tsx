@@ -110,7 +110,7 @@ export function UsersManagement() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 mb-6">
-        <UserPlus size={24} className="text-blue-400" />
+        <UserPlus size={24} className="text-red-400" />
         <h2 className="text-2xl font-bold">User Management</h2>
       </div>
 
@@ -151,7 +151,7 @@ export function UsersManagement() {
             <select
               value={newRole}
               onChange={(e) => setNewRole(e.target.value)}
-              className="w-full px-3 py-2 bg-dark-800 border border-dark-600 rounded-lg text-dark-100 hover:border-dark-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-dark-800 border border-dark-600 rounded-lg text-dark-100 hover:border-dark-500 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
             >
               <option value="Board">Board</option>
               <option value="Administrateur">Administrateur</option>
@@ -205,7 +205,7 @@ export function UsersManagement() {
                         <select
                           value={editingRole}
                           onChange={(e) => setEditingRole(e.target.value)}
-                          className="px-3 py-2 bg-dark-800 border border-dark-600 rounded-lg text-dark-100 hover:border-dark-500 focus:outline-none focus:border-blue-500"
+                          className="px-3 py-2 bg-dark-800 border border-dark-600 rounded-lg text-dark-100 hover:border-dark-500 focus:outline-none focus:border-red-500"
                         >
                           <option value="Board">Board</option>
                           <option value="Administrateur">Administrateur</option>
@@ -232,8 +232,8 @@ export function UsersManagement() {
                         <span
                           className={`px-3 py-2 rounded-lg text-sm font-medium cursor-pointer hover:opacity-80 ${
                             user.role === 'Administrateur'
-                              ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                              : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                              ? 'bg-red-600/40 text-red-200 border border-red-500/50'
+                              : 'bg-red-500/20 text-red-300 border border-red-500/30'
                           }`}
                           onClick={() => {
                             setEditingId(user.id)
