@@ -69,6 +69,7 @@ interface Point {
   name: string
   description?: string
   completed: boolean
+  completedAt?: string // ISO date string
   priority: string
   orderIndex: number
 }
@@ -79,6 +80,7 @@ interface Stage {
   name: string
   description?: string
   deliveryDate?: string
+  validatedAt?: string // ISO date string - when all points completed
   icon?: string
   priority: string
   status: string
@@ -819,6 +821,11 @@ function StageItemTree({
             <h5 className="text-sm font-semibold text-white truncate">{stage.name}</h5>
             <div className="flex gap-1.5 mt-1 flex-wrap items-center text-xs">
               <span className="text-dark-400">📅 {stage.deliveryDate || 'N/A'}</span>
+              {stage.validatedAt && (
+                <span className="text-green-400 font-semibold flex items-center gap-1">
+                  ✓ Validé le {new Date(stage.validatedAt).toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' })}
+                </span>
+              )}
               <Badge className={`${getStatusColor(calculateStatus(stage.points).toString())} px-1.5 py-0.5 text-xs`}>
                 {renderStatusIcon(calculateStatus(stage.points))}
               </Badge>
@@ -910,6 +917,8 @@ function PointItemTree({
   onTogglePoint?: (pointId: number, completed: boolean) => void
 }) {
   const isSelected = selectedItem?.type === 'point' && selectedItem?.id === point.id
+  const completedDate = point.completedAt ? new Date(point.completedAt) : null
+  const formattedDate = completedDate ? completedDate.toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' }) : null
 
   return (
     <div
@@ -954,6 +963,13 @@ function PointItemTree({
         <span className={point.completed ? 'line-through text-dark-400 flex-1 text-xs' : 'text-white flex-1 text-xs'}>
           {point.name}
         </span>
+
+        {/* Validation date */}
+        {point.completed && formattedDate && (
+          <span className="text-green-400 text-xs whitespace-nowrap">
+            ✓ {formattedDate}
+          </span>
+        )}
       </div>
     </div>
   )

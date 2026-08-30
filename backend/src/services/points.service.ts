@@ -1,5 +1,5 @@
 import { db } from '@/db'
-import { points, updateHistory } from '@/db/schema'
+import { points, updateHistory, stages } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { Point } from '@/types'
 
@@ -60,7 +60,11 @@ export async function updatePoint(
   
   if (data.name !== undefined) updateData.name = data.name
   if (data.description !== undefined) updateData.description = data.description
-  if (data.completed !== undefined) updateData.completed = data.completed
+  if (data.completed !== undefined) {
+    updateData.completed = data.completed
+    // Set or clear completedAt based on completion status
+    updateData.completedAt = data.completed ? new Date() : null
+  }
   if (data.orderIndex !== undefined) updateData.orderIndex = data.orderIndex
   if (data.priority !== undefined) updateData.priority = data.priority
 
@@ -80,6 +84,24 @@ export async function updatePoint(
       newValue: data.completed ? 'completed' : 'pending',
       changedBy: author,
     })
+
+    // Check if all points in the stage are completed
+    const stagePoints = await getPointsByStage(existing.stageId)
+    const allCompleted = stagePoints.every(p => p.id === id ? data.completed : p.completed)
+    
+    if (allCompleted) {
+      // All points completed - set stage validated date
+      await db
+        .update(stages)
+        .set({ validatedAt: new Date() })
+        .where(eq(stages.id, existing.stageId))
+    } else if (data.completed === false) {
+      // A point was uncompleted - clear stage validated date
+      await db
+        .update(stages)
+        .set({ validatedAt: null })
+        .where(eq(stages.id, existing.stageId))
+    }
   }
 
   return updated

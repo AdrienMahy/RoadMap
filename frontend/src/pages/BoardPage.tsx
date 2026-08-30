@@ -51,6 +51,7 @@ interface Point {
   name: string
   description?: string
   completed: boolean
+  completedAt?: string
   priority: string
   orderIndex: number
 }
@@ -61,6 +62,7 @@ interface Stage {
   name: string
   description?: string
   deliveryDate?: string
+  validatedAt?: string
   icon?: string
   priority: string
   status: string

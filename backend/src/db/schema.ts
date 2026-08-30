@@ -46,6 +46,7 @@ export const stages = pgTable('stages', {
   name: varchar('name', { length: 255 }).notNull(),
   description: text('description'),
   deliveryDate: date('delivery_date'),
+  validatedAt: timestamp('validated_at'), // Date when all points were completed
   icon: varchar('icon', { length: 50 }), // Lucide icon name
   priority: varchar('priority', { length: 20 }).notNull().default('medium'), // low, medium, high
   orderIndex: integer('order_index').notNull().default(0),
@@ -61,6 +62,7 @@ export const points = pgTable('points', {
   name: varchar('name', { length: 255 }).notNull(),
   description: text('description'),
   completed: boolean('completed').notNull().default(false),
+  completedAt: timestamp('completed_at'), // Date when point was marked complete
   priority: varchar('priority', { length: 20 }).notNull().default('medium'), // low, medium, high
   orderIndex: integer('order_index').notNull().default(0),
   createdAt: timestamp('created_at').defaultNow().notNull(),

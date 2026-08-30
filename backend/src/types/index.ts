@@ -15,10 +15,11 @@ export interface Project {
 
 export interface Stage {
   id: number
-  projectId: number
+  moduleId: number
   name: string
   description?: string
   deliveryDate?: Date
+  validatedAt?: Date // Date when all points were completed
   orderIndex: number
   status: 'pending' | 'in-progress' | 'completed' | 'blocked'
   createdAt: Date
@@ -34,6 +35,7 @@ export interface Point {
   name: string
   description?: string
   completed: boolean
+  completedAt?: Date // Date when point was marked complete
   orderIndex: number
   createdAt: Date
   updatedAt: Date
