@@ -852,7 +852,15 @@ function StageItemTree({
               onMoveItem={onMoveItem}
               parentId={stage.id}
               onTogglePoint={(pointId: number, completed: boolean) => {
-                updatePoint(pointId, { completed }).then(() => onRefresh(projectId))
+                console.log('[DEBUG] Toggling point', pointId, 'to completed:', completed)
+                updatePoint(pointId, { completed })
+                  .then((result) => {
+                    console.log('[DEBUG] Point updated:', result)
+                    onRefresh(projectId)
+                  })
+                  .catch((error) => {
+                    console.error('[DEBUG] Error updating point:', error)
+                  })
               }}
             />
           ))}
@@ -922,7 +930,7 @@ function PointItemTree({
 
   return (
     <div
-      onClick={() => onSelect('point', point.id)}
+      onClick={(e) => e.stopPropagation()}
       className={`p-2 rounded border text-xs transition ${
         isSelected
           ? 'bg-red-500/20 border-red-500'
@@ -930,15 +938,18 @@ function PointItemTree({
       }`}
     >
       <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          checked={point.completed}
-          onChange={(e) => {
-            e.stopPropagation()
-            onTogglePoint?.(point.id, e.target.checked)
-          }}
-          className="cursor-pointer accent-blue-500"
-        />
+        <label className="cursor-pointer flex items-center">
+          <input
+            type="checkbox"
+            checked={point.completed}
+            onChange={(e) => {
+              if (onTogglePoint) {
+                onTogglePoint(point.id, e.target.checked)
+              }
+            }}
+            className="cursor-pointer accent-blue-500"
+          />
+        </label>
         
         {/* Move buttons */}
         <div className="flex gap-0.5">
@@ -960,7 +971,10 @@ function PointItemTree({
           </button>
         </div>
         
-        <span className={point.completed ? 'line-through text-dark-400 flex-1 text-xs' : 'text-white flex-1 text-xs'}>
+        <span 
+          onClick={() => onSelect('point', point.id)}
+          className={`flex-1 text-xs cursor-pointer ${point.completed ? 'line-through text-dark-400' : 'text-white'}`}
+        >
           {point.name}
         </span>
 

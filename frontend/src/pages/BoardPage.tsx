@@ -4,7 +4,7 @@ import { Card } from '../components/Card'
 import { Badge } from '../components/Badge'
 import { CommentsOffCanvas } from '../components/CommentsOffCanvas'
 import { useAuth } from '../contexts/AuthContext'
-import { ChevronDown, ChevronRight, CheckCircle, Clock, Zap, AlertCircle, AlertTriangle, AlertOctagon, Minus, MessageCircle } from 'lucide-react'
+import { ChevronDown, ChevronRight, CheckCircle, Clock, Zap, AlertCircle, AlertTriangle, AlertOctagon, Minus, MessageCircle, Calendar, BadgeCheck } from 'lucide-react'
 import { getStatusColor, calculateStatus, getPriorityColor, getStatusBorderColor, getStatusIconName, getPriorityIconName, getStatusIconColor, getPriorityIconColor, getPriorityLabel } from '../lib/status'
 import { getIconByName } from '../lib/icons'
 
@@ -526,13 +526,25 @@ function TimelineView({
                       {getPriorityLabel(stage.priority || 'medium')}
                     </div>
 
-                    {/* Date - aligned right */}
-                    <div className={`ml-auto text-xs font-medium ${
-                      dateStatus === 'late' ? 'text-red-400' :
-                      dateStatus === 'ahead' ? 'text-green-400' :
-                      'text-dark-400'
-                    }`}>
-                      {formatDate(stage.deliveryDate)}
+                    {/* Dates section - aligned right */}
+                    <div className="ml-auto flex flex-col gap-2 items-end">
+                      {/* Delivery date - planned */}
+                      <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md font-medium text-xs transition-colors ${
+                        dateStatus === 'late' ? 'bg-red-500/15 text-red-300 border border-red-500/30' :
+                        dateStatus === 'ahead' ? 'bg-blue-500/15 text-blue-300 border border-blue-500/30' :
+                        'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                      }`}>
+                        <Calendar size={14} />
+                        <span>Livraison: {formatDate(stage.deliveryDate)}</span>
+                      </div>
+                      
+                      {/* Validation date - actual */}
+                      {stage.validatedAt && (
+                        <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-green-500/15 text-green-300 border border-green-500/30 font-semibold text-xs">
+                          <BadgeCheck size={14} />
+                          <span>Validé: {new Date(stage.validatedAt).toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -575,7 +587,15 @@ function TimelineView({
                               disabled
                               className="mt-0.5 cursor-default accent-red-500"
                             />
-                            <span className="flex-1">{point.name}</span>
+                            <div className="flex-1 flex items-center justify-between gap-2">
+                              <span>{point.name}</span>
+                              {point.completed && point.completedAt && (
+                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-green-500/15 border border-green-500/20 text-xs font-medium whitespace-nowrap">
+                                  <BadgeCheck size={11} />
+                                  <span>{new Date(point.completedAt).toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -688,8 +708,23 @@ function StageItemBoard({
 
           <div className="flex-1 min-w-0">
             <h5 className="text-sm font-semibold text-white truncate">{stage.name}</h5>
-            <div className="flex gap-1.5 mt-1 flex-wrap items-center text-xs">
-              <span className="text-dark-400">📅 {stage.deliveryDate || 'N/A'}</span>
+            <div className="flex gap-2 mt-2 flex-wrap items-center text-xs">
+              {/* Delivery date badge - compact */}
+              <div className={`flex items-center gap-1 px-2 py-1 rounded border text-xs font-medium ${
+                'bg-blue-500/10 text-blue-400 border-blue-500/20'
+              }`}>
+                <Calendar size={12} />
+                <span>{stage.deliveryDate || 'N/A'}</span>
+              </div>
+              
+              {/* Validation date badge - if validated */}
+              {stage.validatedAt && (
+                <div className="flex items-center gap-1 px-2 py-1 rounded border bg-green-500/10 text-green-400 border-green-500/20 font-semibold text-xs">
+                  <BadgeCheck size={12} />
+                  <span>{new Date(stage.validatedAt).toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                </div>
+              )}
+              
               <Badge className={`${getStatusColor(stageStatus)} px-1.5 py-0.5 text-xs`}>
                 {renderStatusIcon(stageStatus)}
               </Badge>
