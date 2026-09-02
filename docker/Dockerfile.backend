@@ -18,8 +18,5 @@ COPY backend/src ./src
 # Expose port
 EXPOSE 3101
 
-# Start application using tsx (TypeScript runner)
+# Start application (for production use 'start', for dev use 'dev')
 CMD ["npm", "run", "dev"]
-
-# Start application
-CMD ["npm", "start"]

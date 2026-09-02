@@ -3,9 +3,9 @@ services:
     image: postgres:16-alpine
     container_name: roadmap-db
     environment:
-      POSTGRES_USER: roadmap
-      POSTGRES_PASSWORD: roadmap123
-      POSTGRES_DB: roadmap
+      POSTGRES_USER: ${DB_USER:-roadmap}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-roadmap123}
+      POSTGRES_DB: ${DB_NAME:-roadmap}
     ports:
       - "3102:5432"
     volumes:
@@ -23,11 +23,12 @@ services:
       dockerfile: docker/Dockerfile.backend
     container_name: roadmap-backend
     environment:
-      DATABASE_URL: postgresql://roadmap:roadmap123@postgres:5432/roadmap
-      NODE_ENV: production
+      DATABASE_URL: postgresql://${DB_USER:-roadmap}:${DB_PASSWORD:-roadmap123}@postgres:5432/${DB_NAME:-roadmap}
+      NODE_ENV: ${NODE_ENV:-development}
       PORT: 3101
-      DEV_ACCESS_CODE: roadmap2026
+      DEV_ACCESS_CODE: ${DEV_ACCESS_CODE:-roadmap2026}
       TEAMS_WEBHOOK_URL: ${TEAMS_WEBHOOK_URL:-}
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production}
     ports:
       - "3101:3101"
     depends_on:
@@ -47,8 +48,8 @@ services:
     depends_on:
       - backend
     environment:
-      VITE_API_URL: /api
-      VITE_DEV_ACCESS_CODE: roadmap2026
+      VITE_API_URL: ${VITE_API_URL:-/api}
+      VITE_DEV_ACCESS_CODE: ${DEV_ACCESS_CODE:-roadmap2026}
 
 volumes:
   postgres_data:
