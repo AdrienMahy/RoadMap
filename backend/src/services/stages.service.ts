@@ -1,6 +1,7 @@
 import { db } from '@/db'
-import { stages, points, updateHistory } from '@/db/schema'
+import { stages, points, updateHistory, users, projects, modules } from '@/db/schema'
 import { eq } from 'drizzle-orm'
+import NotificationsService from './notifications.service'
 
 /**
  * Stages Service
@@ -127,6 +128,29 @@ export async function updateStage(
       newValue: data.status,
       changedBy: 'system',
     })
+
+    // Create notification if stage is marked as stopped
+    if (data.status === 'stopped') {
+      try {
+        const module = await db.select().from(modules).where(eq(modules.id, updated.moduleId)).then(r => r[0])
+        const project = await db.select().from(projects).where(eq(projects.id, module.projectId)).then(r => r[0])
+        const allUsers = await db.select().from(users)
+
+        for (const user of allUsers) {
+          await NotificationsService.createNotification({
+            userId: user.id,
+            type: 'stage_stopped',
+            targetType: 'stage',
+            targetId: id,
+            projectId: module.projectId,
+            relatedUserId: undefined,
+            message: `Stage "${updated.name}" stopped in "${project.name}"`,
+          })
+        }
+      } catch (error) {
+        console.error('Error creating stage stopped notification:', error)
+      }
+    }
   }
 
   return updated

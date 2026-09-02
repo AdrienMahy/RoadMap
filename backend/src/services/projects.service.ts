@@ -1,6 +1,6 @@
 import { db } from '../db'
-import { projects, modules, stages, points, updateHistory } from '../db/schema'
-import { eq } from 'drizzle-orm'
+import { projects, modules, stages, points, updateHistory, comments } from '../db/schema'
+import { eq, and, count } from 'drizzle-orm'
 
 export async function getProjects() {
   const allProjects = await db.select().from(projects).orderBy(projects.orderIndex)
@@ -94,7 +94,17 @@ export async function getProjectWithHierarchy(projectId: number) {
                 )
               : 0
 
-          return { ...stage, points: stagePoints, progress: stageProgress }
+          // Count comments for this stage
+          const commentCount = await db
+            .select({ count: count() })
+            .from(comments)
+            .where(and(
+              eq(comments.targetType, 'stage'),
+              eq(comments.targetId, stage.id)
+            ))
+            .then(result => result[0]?.count || 0)
+
+          return { ...stage, points: stagePoints, progress: stageProgress, commentCount }
         })
       )
 

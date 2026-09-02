@@ -1,6 +1,7 @@
 import { db } from '../db/index'
-import { modules, stages, points } from '../db/schema'
-import { eq } from 'drizzle-orm'
+import { modules, stages, points, users, projects } from '../db/schema'
+import { eq, and, isNull } from 'drizzle-orm'
+import NotificationsService from './notifications.service'
 
 // Get all modules for a project
 export async function getModulesByProject(projectId: number) {
@@ -135,4 +136,44 @@ export async function deleteModule(id: number) {
 
   // Delete module
   return await db.delete(modules).where(eq(modules.id, id))
+}
+
+/**
+ * Check if all stages in a module are validated and create notification if so
+ */
+export async function checkAndNotifyModuleValidation(moduleId: number) {
+  try {
+    const stageList = await db
+      .select()
+      .from(stages)
+      .where(eq(stages.moduleId, moduleId))
+
+    // Check if all stages have validatedAt set
+    const allValidated = stageList.length > 0 && stageList.every(s => s.validatedAt !== null)
+
+    if (allValidated) {
+      const module = await getModule(moduleId)
+      const project = await db
+        .select()
+        .from(projects)
+        .where(eq(projects.id, module.projectId))
+        .then(r => r[0])
+
+      const allUsers = await db.select().from(users)
+
+      for (const user of allUsers) {
+        await NotificationsService.createNotification({
+          userId: user.id,
+          type: 'module_validated',
+          targetType: 'module',
+          targetId: moduleId,
+          projectId: module.projectId,
+          relatedUserId: undefined,
+          message: `Module \"${module.name}\" fully validated in \"${project.name}\"`,
+        })
+      }
+    }
+  } catch (error) {
+    console.error('Error checking module validation:', error)
+  }
 }

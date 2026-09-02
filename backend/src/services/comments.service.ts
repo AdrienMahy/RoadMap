@@ -1,5 +1,5 @@
 import { db } from '../db'
-import { comments, users } from '../db/schema'
+import { comments, users, projects, stages, modules } from '../db/schema'
 import { eq, and, ne } from 'drizzle-orm'
 import NotificationsService from './notifications.service'
 
@@ -16,6 +16,47 @@ export interface UpdateCommentPayload {
 }
 
 export class CommentsService {
+  /**
+   * Helper to get the name of the commented target
+   */
+  private async getTargetName(targetType: string, targetId: number): Promise<string> {
+    if (targetType === 'project') {
+      const result = await db
+        .select({ name: projects.name })
+        .from(projects)
+        .where(eq(projects.id, targetId))
+        .then(r => r[0])
+      return result?.name || 'Unknown project'
+    } else if (targetType === 'stage') {
+      const result = await db
+        .select({ name: stages.name })
+        .from(stages)
+        .where(eq(stages.id, targetId))
+        .then(r => r[0])
+      return result?.name || 'Unknown stage'
+    } else if (targetType === 'module') {
+      const result = await db
+        .select({ name: modules.name })
+        .from(modules)
+        .where(eq(modules.id, targetId))
+        .then(r => r[0])
+      return result?.name || 'Unknown module'
+    }
+    return 'Unknown target'
+  }
+
+  /**
+   * Helper to get project name
+   */
+  private async getProjectName(projectId: number): Promise<string> {
+    const result = await db
+      .select({ name: projects.name })
+      .from(projects)
+      .where(eq(projects.id, projectId))
+      .then(r => r[0])
+    return result?.name || 'Unknown project'
+  }
+
   async getComments(targetType: string, targetId: number) {
     const result = await db
       .select({
@@ -62,6 +103,13 @@ export class CommentsService {
     const allUsers = await db.select().from(users)
     const userName = creator?.firstName || creator?.username || 'A user'
     
+    // Get target and project names for better message
+    const targetName = await this.getTargetName(payload.targetType, payload.targetId)
+    const projectName = await this.getProjectName(payload.projectId)
+    
+    // Build descriptive message
+    const message = `${userName} commented on "${targetName}" in "${projectName}"`
+    
     for (const user of allUsers) {
       if (user.id !== payload.userId) {
         await NotificationsService.createNotification({
@@ -71,7 +119,7 @@ export class CommentsService {
           targetId: payload.targetId,
           projectId: payload.projectId,
           relatedUserId: payload.userId,
-          message: `${userName} added a comment`,
+          message: message,
         })
       }
     }

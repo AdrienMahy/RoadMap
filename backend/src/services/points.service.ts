@@ -1,7 +1,9 @@
 import { db } from '@/db'
-import { points, updateHistory, stages } from '@/db/schema'
+import { points, updateHistory, stages, users, projects, modules } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { Point } from '@/types'
+import NotificationsService from './notifications.service'
+import { checkAndNotifyModuleValidation } from './modules.service'
 
 /**
  * Points Routes
@@ -91,10 +93,33 @@ export async function updatePoint(
     
     if (allCompleted) {
       // All points completed - set stage validated date
-      await db
+      const updatedStage = await db
         .update(stages)
         .set({ validatedAt: new Date() })
         .where(eq(stages.id, existing.stageId))
+        .returning()
+        .then(r => r[0])
+      
+      // Create validation notification for all users
+      const stage = await db.select().from(stages).where(eq(stages.id, existing.stageId)).then(r => r[0])
+      const module = await db.select().from(modules).where(eq(modules.id, stage.moduleId)).then(r => r[0])
+      const project = await db.select().from(projects).where(eq(projects.id, module.projectId)).then(r => r[0])
+      const allUsers = await db.select().from(users)
+      
+      for (const user of allUsers) {
+        await NotificationsService.createNotification({
+          userId: user.id,
+          type: 'stage_validated',
+          targetType: 'stage',
+          targetId: existing.stageId,
+          projectId: module.projectId,
+          relatedUserId: undefined,
+          message: `Stage "${stage.name}" validated in "${project.name}"`,
+        })
+      }
+
+      // Check if all stages in the module are now validated
+      await checkAndNotifyModuleValidation(stage.moduleId)
     } else if (data.completed === false) {
       // A point was uncompleted - clear stage validated date
       await db

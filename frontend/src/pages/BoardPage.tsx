@@ -4,7 +4,7 @@ import { Card } from '../components/Card'
 import { Badge } from '../components/Badge'
 import { CommentsOffCanvas } from '../components/CommentsOffCanvas'
 import { useAuth } from '../contexts/AuthContext'
-import { ChevronDown, ChevronRight, CheckCircle, Clock, Zap, AlertCircle, AlertTriangle, AlertOctagon, Minus, MessageCircle, Calendar, BadgeCheck } from 'lucide-react'
+import { ChevronDown, ChevronRight, CheckCircle, Clock, Zap, AlertCircle, AlertTriangle, AlertOctagon, Minus, MessageCircle, Calendar, BadgeCheck, ArrowLeft } from 'lucide-react'
 import { getStatusColor, calculateStatus, getPriorityColor, getStatusBorderColor, getStatusIconName, getPriorityIconName, getStatusIconColor, getPriorityIconColor, getPriorityLabel } from '../lib/status'
 import { getIconByName } from '../lib/icons'
 
@@ -69,6 +69,7 @@ interface Stage {
   progress: number
   orderIndex: number
   points?: Point[]
+  commentCount?: number
 }
 
 interface Module {
@@ -325,6 +326,18 @@ function ProjectDetailView({
 }) {
   return (
     <div className="flex flex-col h-full overflow-hidden">
+      {/* Header with back button */}
+      <div className="flex items-center gap-3 pb-4 border-b border-dark-600 mb-4">
+        <button
+          onClick={onBack}
+          className="p-1.5 rounded hover:bg-dark-600/50 transition text-dark-300 hover:text-white"
+          title="Back to projects"
+        >
+          <ArrowLeft size={20} />
+        </button>
+        <h2 className="text-xl font-bold text-white">{project.name}</h2>
+      </div>
+
       {project.modules && project.modules.length > 0 ? (
         <TimelineView
           modules={project.modules}
@@ -446,7 +459,8 @@ function TimelineView({
         {sortedStages.map((stage, idx) => {
           const stageKey = `stage-${stage.id}`
           const expanded = expandedItems.has(stageKey)
-          const stageStatus = calculateStatus(stage.points).toString()
+          // Check if stage is manually stopped, otherwise calculate from points
+          const stageStatus = stage.status === 'stopped' ? 'stopped' : calculateStatus(stage.points).toString()
           const dateStatus = getDateStatus(stage.deliveryDate)
           const isFirstIncomplete = stage.id === firstIncompleteId
 
@@ -457,12 +471,15 @@ function TimelineView({
                 <div className={`flex h-8 w-8 items-center justify-center rounded-full flex-shrink-0 ring-2 ring-dark-900 shadow-sm relative z-10 ${
                   stageStatus === 'completed' ? 'bg-green-500' :
                   stageStatus === 'in-progress' ? 'bg-blue-500' :
+                  stageStatus === 'stopped' ? 'bg-red-600' :
                   'bg-red-500'
                 }`}>
                   {stageStatus === 'completed' ? (
                     <CheckCircle size={18} className="text-white" />
                   ) : stageStatus === 'in-progress' ? (
                     <Zap size={18} className="text-white" />
+                  ) : stageStatus === 'stopped' ? (
+                    <AlertOctagon size={18} className="text-white" />
                   ) : (
                     <Clock size={18} className="text-white" />
                   )}
@@ -486,10 +503,13 @@ function TimelineView({
                           e.stopPropagation()
                           onOpenComments('stage', stage.id, stage.name)
                         }}
-                        className="text-dark-400 hover:text-blue-400 transition p-1 rounded hover:bg-dark-700/50"
+                        className="text-dark-400 hover:text-blue-400 transition p-1 rounded hover:bg-dark-700/50 relative"
                         title="Comments"
                       >
                         <MessageCircle size={16} />
+                        {stage.commentCount && stage.commentCount > 0 && (
+                          <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
+                        )}
                       </button>
                       <span className="text-xs font-mono text-dark-500 bg-dark-700/50 px-2 py-1 rounded">
                         {stage.moduleName.substring(0, 2).toUpperCase()}
@@ -511,14 +531,16 @@ function TimelineView({
                     <div className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-all ${
                       stageStatus === 'completed' ? 'bg-green-500/15 text-green-400' :
                       stageStatus === 'in-progress' ? 'bg-blue-500/15 text-blue-400' :
+                      stageStatus === 'stopped' ? 'bg-red-500/15 text-red-400' :
                       'bg-yellow-500/15 text-yellow-400'
                     }`}>
                       <div className={`w-1.5 h-1.5 rounded-full ${
                         stageStatus === 'completed' ? 'bg-green-400' :
                         stageStatus === 'in-progress' ? 'bg-blue-400' :
+                        stageStatus === 'stopped' ? 'bg-red-400' :
                         'bg-yellow-400'
                       }`} />
-                      {stageStatus === 'completed' ? 'Shipped' : stageStatus === 'in-progress' ? 'In progress' : 'Pending'}
+                      {stageStatus === 'completed' ? 'Shipped' : stageStatus === 'in-progress' ? 'In progress' : stageStatus === 'stopped' ? 'Stopped' : 'Pending'}
                     </div>
 
                     {/* Priority badge */}
@@ -684,7 +706,8 @@ function StageItemBoard({
 }) {
   const stageKey = `stage-${stage.id}`
   const expanded = expandedItems.has(stageKey)
-  const stageStatus = calculateStatus(stage.points).toString()
+  // Check if stage is manually stopped, otherwise calculate from points
+  const stageStatus = stage.status === 'stopped' ? 'stopped' : calculateStatus(stage.points).toString()
 
   return (
     <div>

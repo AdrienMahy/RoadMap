@@ -1,7 +1,22 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Bell, X, Eye, CheckCheck } from 'lucide-react'
+import { Bell, X, Eye, CheckCheck, MessageCircle, CheckCircle, BadgeCheck, AlertCircle } from 'lucide-react'
 import { useNotifications } from '@/contexts/NotificationsContext'
 import { Notification } from '@/lib/notifications'
+
+function getNotificationIcon(type: string) {
+  switch (type) {
+    case 'comment_added':
+      return { icon: MessageCircle, color: 'text-blue-400', bgColor: 'bg-blue-500/10' }
+    case 'stage_validated':
+      return { icon: CheckCircle, color: 'text-green-400', bgColor: 'bg-green-500/10' }
+    case 'module_validated':
+      return { icon: BadgeCheck, color: 'text-emerald-400', bgColor: 'bg-emerald-500/10' }
+    case 'stage_stopped':
+      return { icon: AlertCircle, color: 'text-red-400', bgColor: 'bg-red-500/10' }
+    default:
+      return { icon: Bell, color: 'text-dark-400', bgColor: 'bg-dark-500/10' }
+  }
+}
 
 export function NotificationBell() {
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } =
@@ -97,45 +112,49 @@ export function NotificationBell() {
 
           {/* Notifications List */}
           <div className="max-h-96 overflow-y-auto">
-            {notifications.length === 0 ? (
+            {notifications.filter(n => !n.read).length === 0 ? (
               <div className="p-6 text-center text-dark-400">
-                <p>No notifications</p>
+                <p>No new notifications</p>
               </div>
             ) : (
-              notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  onClick={() => handleNotificationClick(notification)}
-                  className={`p-3 border-b border-red-900/10 cursor-pointer transition ${
-                    notification.read
-                      ? 'bg-dark-800 hover:bg-dark-700'
-                      : 'bg-red-950/10 hover:bg-red-950/20'
-                  }`}
-                >
-                  <div className="flex justify-between items-start gap-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-dark-100 font-medium">{notification.message}</p>
-                      <p className="text-xs text-dark-500 mt-1">
-                        {new Date(notification.createdAt).toLocaleString()}
-                      </p>
-                    </div>
-                    <button
-                      onClick={(e) => handleViewNotification(e, notification)}
-                      className="text-dark-400 hover:text-red-400 transition flex-shrink-0"
-                      title="View comment"
+              notifications
+                .filter(n => !n.read)
+                .map((notification) => {
+                  const { icon: IconComponent, color, bgColor } = getNotificationIcon(notification.type)
+                  return (
+                    <div
+                      key={notification.id}
+                      onClick={() => handleNotificationClick(notification)}
+                      className={`p-3 border-b border-red-900/10 cursor-pointer transition ${bgColor} hover:opacity-80`}
                     >
-                      <Eye size={14} />
-                    </button>
-                  </div>
-                </div>
-              ))
+                      <div className="flex justify-between items-start gap-3">
+                        <div className={`flex-shrink-0 p-1.5 rounded ${bgColor}`}>
+                          <IconComponent size={16} className={color} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-dark-100 font-medium">{notification.message}</p>
+                          <p className="text-xs text-dark-500 mt-1">
+                            {new Date(notification.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                        <button
+                          onClick={(e) => handleViewNotification(e, notification)}
+                          className="text-dark-400 hover:text-red-400 transition flex-shrink-0"
+                          title="View"
+                        >
+                          <Eye size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })
             )}
           </div>
 
           {/* Footer */}
-          {notifications.length > 0 && (
+          {notifications.filter(n => !n.read).length > 0 && (
             <div className="p-2 border-t border-red-900/20 bg-dark-900 rounded-b-lg text-xs text-dark-400 text-center">
-              Showing {notifications.length} notifications
+              Showing {notifications.filter(n => !n.read).length} unread notifications
             </div>
           )}
         </div>
