@@ -765,12 +765,24 @@ function StageItemTree({
   const [editingNewPoint, setEditingNewPoint] = useState(false)
   const [newPointName, setNewPointName] = useState('')
   const isSelected = selectedItem?.type === 'stage' && selectedItem?.id === stage.id
+  const isStopped = stage.status === 'stopped'
 
   const handleAddPoint = async () => {
     if (!newPointName.trim() || !onAddPoint) return
     await onAddPoint(stage.id, newPointName)
     setNewPointName('')
     setEditingNewPoint(false)
+  }
+
+  const handleToggleStop = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    const newStatus = isStopped ? 'pending' : 'stopped'
+    try {
+      await updateStage(stage.id, { status: newStatus })
+      onRefresh(projectId)
+    } catch (error) {
+      console.error('Failed to update stage status:', error)
+    }
   }
 
   return (
@@ -829,6 +841,19 @@ function StageItemTree({
               <Badge className={`${getStatusColor(calculateStatus(stage.points).toString())} px-1.5 py-0.5 text-xs`}>
                 {renderStatusIcon(calculateStatus(stage.points))}
               </Badge>
+              
+              {/* Stop toggle button */}
+              <button
+                onClick={handleToggleStop}
+                className={`px-2 py-0.5 rounded text-xs font-medium transition ${
+                  isStopped
+                    ? 'bg-red-600/30 text-red-200 border border-red-500/50'
+                    : 'bg-dark-600/30 text-dark-300 border border-dark-500/30 hover:bg-dark-600/50'
+                }`}
+              >
+                {isStopped ? '🛑 Stopped' : 'Stop'}
+              </button>
+              
               <Badge className={`${getPriorityColor(stage.priority || 'medium')} px-1.5 py-0.5 text-xs flex items-center gap-1`}>
                 {renderPriorityIcon(stage.priority || 'medium')}
                 <span>{getPriorityLabel(stage.priority || 'medium')}</span>

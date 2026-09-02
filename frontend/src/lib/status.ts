@@ -1,6 +1,6 @@
 // Status and priority utilities
 
-export type StatusType = 'pending' | 'in-progress' | 'completed' | 'on-hold'
+export type StatusType = 'pending' | 'in-progress' | 'completed' | 'on-hold' | 'stopped'
 export type PriorityType = 'low' | 'medium' | 'high' | 'critical'
 
 // Auto-calculate status based on completion
@@ -28,6 +28,8 @@ export function getStatusColor(status: string): string {
       return 'bg-orange-600/30 text-orange-200 border border-orange-500/50'
     case 'on-hold':
       return 'bg-yellow-600/30 text-yellow-200 border border-yellow-500/50'
+    case 'stopped':
+      return 'bg-red-600/30 text-red-200 border border-red-500/50'
     default:
       return 'bg-blue-600/30 text-blue-200 border border-blue-500/50'
   }
@@ -47,6 +49,8 @@ export function getStatusIconName(status: string): string {
       return 'Zap'
     case 'on-hold':
       return 'AlertCircle'
+    case 'stopped':
+      return 'AlertOctagon'
     default:
       return 'Clock'
   }
@@ -88,6 +92,8 @@ export function getStatusIconColor(status: string): string {
       return 'text-orange-400'
     case 'on-hold':
       return 'text-yellow-400'
+    case 'stopped':
+      return 'text-red-400'
     default:
       return 'text-blue-400'
   }
