@@ -3,7 +3,7 @@ import { Trash2, Save, UserPlus, AlertCircle } from 'lucide-react'
 import { Button } from './Button'
 import { Input } from './Input'
 import { Card } from './Card'
-import { fetchAllUsers, updateUserRole, deleteUser } from '../lib/api'
+import { api, fetchAllUsers, updateUserRole, deleteUser } from '../lib/api'
 
 interface User {
   id: number
@@ -80,20 +80,12 @@ export function UsersManagement() {
 
     try {
       setError('')
-      const response = await fetch('http://localhost:3101/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: newUsername,
-          password: newPassword,
-          email: newRole,
-        }),
+      await api.post('/auth/register', {
+        username: newUsername,
+        password: newPassword,
+        email: '',
+        role: newRole,
       })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Failed to create user')
-      }
 
       setNewUsername('')
       setNewPassword('')

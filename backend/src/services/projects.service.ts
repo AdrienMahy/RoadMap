@@ -5,51 +5,19 @@ import { eq, and, count } from 'drizzle-orm'
 export async function getProjects() {
   const allProjects = await db.select().from(projects).orderBy(projects.orderIndex)
   
-  // Calculate progress for each project
-  const projectsWithProgress = await Promise.all(
+  // Get full hierarchy for each project
+  const projectsWithHierarchy = await Promise.all(
     allProjects.map(async (project) => {
       try {
-        const projectModules = await db
-          .select()
-          .from(modules)
-          .where(eq(modules.projectId, project.id))
-        
-        if (projectModules.length === 0) {
-          return { ...project, progress: 0 }
-        }
-        
-        // Get all stages for all modules of this project
-        let allProjectStages: any[] = []
-        for (const mod of projectModules) {
-          const stageList = await db.select().from(stages).where(eq(stages.moduleId, mod.id))
-          allProjectStages.push(...stageList)
-        }
-        
-        if (allProjectStages.length === 0) {
-          return { ...project, progress: 0 }
-        }
-        
-        // Get all points for all stages
-        let allProjectPoints: any[] = []
-        for (const stage of allProjectStages) {
-          const pointList = await db.select().from(points).where(eq(points.stageId, stage.id))
-          allProjectPoints.push(...pointList)
-        }
-        
-        const completedPoints = allProjectPoints.filter(p => p.completed).length
-        const projectProgress = allProjectPoints.length > 0 
-          ? Math.round((completedPoints / allProjectPoints.length) * 100)
-          : 0
-        
-        return { ...project, progress: projectProgress }
+        return await getProjectWithHierarchy(project.id)
       } catch (error) {
-        console.error(`Error calculating progress for project ${project.id}:`, error)
-        return { ...project, progress: 0 }
+        console.error(`Error getting hierarchy for project ${project.id}:`, error)
+        return { ...project, modules: [], progress: 0 }
       }
     })
   )
   
-  return projectsWithProgress
+  return projectsWithHierarchy
 }
 
 export async function getProject(id: number) {

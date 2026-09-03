@@ -6,7 +6,7 @@ const router = Router()
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {
-    const { username, password, email, firstName, lastName } = req.body
+    const { username, password, email, firstName, lastName, role } = req.body
 
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password are required' })
@@ -18,6 +18,7 @@ router.post('/register', async (req, res) => {
       email,
       firstName,
       lastName,
+      role,
     })
 
     res.json(result)

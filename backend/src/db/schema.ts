@@ -43,12 +43,11 @@ export const modules = pgTable('modules', {
 export const stages = pgTable('stages', {
   id: serial('id').primaryKey(),
   moduleId: integer('module_id').notNull(),
+  projectId: integer('project_id').notNull(), // Denormalized for easier queries
   name: varchar('name', { length: 255 }).notNull(),
   description: text('description'),
   deliveryDate: date('delivery_date'),
-  validatedAt: timestamp('validated_at'), // Date when all points were completed
-  icon: varchar('icon', { length: 50 }), // Lucide icon name
-  priority: varchar('priority', { length: 20 }).notNull().default('medium'), // low, medium, high
+  validatedAt: timestamp('validated_at'),
   orderIndex: integer('order_index').notNull().default(0),
   status: varchar('status', { length: 50 }).notNull().default('pending'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -62,8 +61,7 @@ export const points = pgTable('points', {
   name: varchar('name', { length: 255 }).notNull(),
   description: text('description'),
   completed: boolean('completed').notNull().default(false),
-  completedAt: timestamp('completed_at'), // Date when point was marked complete
-  priority: varchar('priority', { length: 20 }).notNull().default('medium'), // low, medium, high
+  completedAt: timestamp('completed_at'),
   orderIndex: integer('order_index').notNull().default(0),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

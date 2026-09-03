@@ -1,0 +1,169 @@
+{
+  "roadmap": {
+    "name": "Data & IT Roadmap",
+    "season": "2026-2027"
+  },
+  "projects": [
+    {
+      "name": "MySDR",
+      "description": "Plateforme unifiée pour la gestion du suivi des données sportives et des questionnaires",
+      "stages": [
+        {
+          "name": "AMS 2.0",
+          "status": "planned",
+          "target": "2026",
+          "points": [
+            "Refonte du système d’association Joueur / Saison pour améliorer le suivi historique des données",
+            "Déploiement sur les réseaux publics pour rendre AMS accessible depuis l’extérieur du réseau interne"
+          ]
+        },
+        {
+          "name": "Amélioration du module Medical",
+          "status": "planned",
+          "target": "2026-2027",
+          "points": [
+            "Amélioration du suivi de la réhabilitation : exercices, étapes, rechutes, etc.",
+            "Ajout d’alerteurs de blessure",
+            "Amélioration de la définition du statut du joueur via les questionnaires et/ou les données GPS"
+          ]
+        },
+        {
+          "name": "Création du module Match",
+          "status": "planned",
+          "target": "2026-2027",
+          "points": [
+            "Séparation du module Match du Planning et création d’un module indépendant",
+            "Création d’une section « Retour individuel »",
+            "Création d’une section « Analyse » pour le reporting des prestations des joueurs",
+            "Création du module « Joueurs en prêt »"
+          ]
+        },
+        {
+          "name": "Amélioration du module Planning",
+          "status": "planned",
+          "target": "2027",
+          "points": [
+            "Création d’événements hors GPS : musculation, séances individuelles, événements hors football, etc."
+          ]
+        },
+        {
+          "name": "Amélioration du module Analyse",
+          "status": "planned",
+          "target": "2027",
+          "points": [
+            "Sortir de la dépendance à Tableau et passer les visuels en React",
+            "Création des différentes analyses pour chaque KPI",
+            "Création d’un module d’exploration des données pour la création de séances ou l’analyse d’un joueur"
+          ]
+        },
+        {
+          "name": "Création du module Player",
+          "status": "planned",
+          "target": "2027",
+          "points": [
+            "Création d’un espace dédié aux joueurs avec accès à leurs propres données",
+            "Accès à un planning individuel en lien avec le module Planning"
+          ]
+        },
+        {
+          "name": "Intégration de QuestionnaireApp",
+          "status": "planned",
+          "target": "2027",
+          "points": [
+            "Migration du service Questionnaire sur le serveur AMS",
+            "Accès aux questionnaires depuis l’interface Joueur"
+          ]
+        },
+        {
+          "name": "Évolution du module Match",
+          "status": "planned",
+          "target": "2027+",
+          "points": [
+            "Refonte du module pour intégrer les données tactico-techniques de SportsDynamics",
+            "Intégration des données des autres providers",
+            "Création de rapports individualisés"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MediaPlatform",
+      "description": "Suite complète de gestion et diffusion des contenus médias et affichages tactiques",
+      "stages": [
+        {
+          "name": "Sécurisation des contenus",
+          "status": "planned",
+          "target": "2026-2027",
+          "points": [
+            "Création d’un coffre-fort pour les contenus sensibles"
+          ]
+        },
+        {
+          "name": "Programmation des diffusions",
+          "status": "planned",
+          "target": "2026-2027",
+          "points": [
+            "Création de programmes de diffusion selon des plages horaires"
+          ]
+        },
+        {
+          "name": "Setup Championnat",
+          "status": "planned",
+          "target": "2026-2027",
+          "points": [
+            "Création d’un setup « Championnat »"
+          ]
+        },
+        {
+          "name": "Suivi des scores",
+          "status": "planned",
+          "target": "2026-2027",
+          "points": [
+            "Création d’un système de suivi des scores"
+          ]
+        },
+        {
+          "name": "Centralisation VMS",
+          "status": "planned",
+          "target": "2026-2027",
+          "points": [
+            "Passage de l’application Desktop à une architecture centralisée sur un serveur dédié",
+            "Évolution vers une application de type VMS",
+            "Centralisation des commandes des caméras",
+            "Centralisation des enregistrements"
+          ]
+        },
+        {
+          "name": "Coffre-fort personnel",
+          "status": "planned",
+          "target": "2026-2027",
+          "points": [
+            "Création d’un espace de stockage personnel et sécurisé pour les utilisateurs"
+          ]
+        },
+        {
+          "name": "Programmation des télévisions",
+          "status": "planned",
+          "target": "2026-2027",
+          "points": [
+            "Programmation de contenus sur les télévisions"
+          ]
+        },
+        {
+          "name": "Contrôle avancé des télévisions",
+          "status": "planned",
+          "target": "2027",
+          "points": [
+            "Contrôle poussé des télévisions",
+            "Allumage à distance des télévisions"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Scrapper",
+      "description": "Service d'extraction et d'intégration des données",
+      "stages": []
+    }
+  ]
+}

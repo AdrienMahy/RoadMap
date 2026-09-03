@@ -13,6 +13,7 @@ export interface RegisterPayload {
   email?: string
   firstName?: string
   lastName?: string
+  role?: string
 }
 
 export interface LoginPayload {
@@ -60,6 +61,12 @@ export class AuthService {
     // Hash password
     const hashedPassword = hashPassword(payload.password)
 
+    const role = payload.username === 'admin'
+      ? 'Administrateur'
+      : payload.role === 'Administrateur'
+        ? 'Administrateur'
+        : 'Board'
+
     // Create user
     const newUser = await db
       .insert(users)
@@ -69,6 +76,7 @@ export class AuthService {
         email: payload.email,
         firstName: payload.firstName,
         lastName: payload.lastName,
+        role,
       })
       .returning({ id: users.id, username: users.username, email: users.email, firstName: users.firstName, lastName: users.lastName, role: users.role })
 
@@ -111,6 +119,19 @@ export class AuthService {
 
     const user = userList[0]
 
+    let currentRole = user.role
+    if (user.username === 'admin' && user.role !== 'Administrateur') {
+      const [updatedUser] = await db
+        .update(users)
+        .set({ role: 'Administrateur' })
+        .where(eq(users.id, user.id))
+        .returning({ id: users.id, username: users.username, email: users.email, firstName: users.firstName, lastName: users.lastName, role: users.role })
+
+      if (updatedUser) {
+        currentRole = updatedUser.role
+      }
+    }
+
     // Check password
     const isPasswordValid = verifyPassword(payload.password, user.password)
     if (!isPasswordValid) {
@@ -122,7 +143,7 @@ export class AuthService {
       {
         id: user.id,
         username: user.username,
-        role: user.role,
+        role: currentRole,
       },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRATION }
@@ -134,7 +155,7 @@ export class AuthService {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      role: user.role,
+      role: currentRole,
       token,
       expiresIn: JWT_EXPIRATION,
     }
@@ -154,7 +175,22 @@ export class AuthService {
     if (userList.length === 0) {
       throw new Error('User not found')
     }
-    return userList[0]
+
+    const user = userList[0]
+
+    if (user.username === 'admin' && user.role !== 'Administrateur') {
+      const [updatedUser] = await db
+        .update(users)
+        .set({ role: 'Administrateur' })
+        .where(eq(users.id, user.id))
+        .returning({ id: users.id, username: users.username, email: users.email, firstName: users.firstName, lastName: users.lastName, role: users.role })
+
+      if (updatedUser) {
+        return updatedUser
+      }
+    }
+
+    return user
   }
 
   // User management methods
