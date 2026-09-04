@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
-import { fetchProjects } from '../lib/api'
+import { fetchProjects, updatePoint, deletePoint } from '../lib/api'
 import { Card } from '../components/Card'
 import { Badge } from '../components/Badge'
+import { Button } from '../components/Button'
+import { Input } from '../components/Input'
 import { CommentsOffCanvas } from '../components/CommentsOffCanvas'
 import { useAuth } from '../contexts/AuthContext'
-import { ChevronDown, ChevronRight, CheckCircle, Clock, Zap, AlertCircle, AlertTriangle, AlertOctagon, Minus, MessageCircle, Calendar, BadgeCheck, ArrowLeft } from 'lucide-react'
+import { ChevronDown, ChevronRight, CheckCircle, Clock, Zap, AlertCircle, AlertTriangle, AlertOctagon, Minus, MessageCircle, Calendar, BadgeCheck, ArrowLeft, Edit2, Trash2, X } from 'lucide-react'
 import { getStatusColor, calculateStatus, getPriorityColor, getStatusBorderColor, getStatusIconName, getPriorityIconName, getStatusIconColor, getPriorityIconColor, getPriorityLabel } from '../lib/status'
 import { getIconByName } from '../lib/icons'
 
@@ -101,6 +103,8 @@ export default function BoardPage() {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
   const [commentsPanel, setCommentsPanel] = useState<{ isOpen: boolean; targetType: 'project' | 'module' | 'stage'; targetId: number; projectId: number; targetName?: string }>({ isOpen: false, targetType: 'project', targetId: 0, projectId: 0 })
+  const [editPointModal, setEditPointModal] = useState<{ isOpen: boolean; point: Point | null; stageId: number }>({ isOpen: false, point: null, stageId: 0 })
+  const [editPointForm, setEditPointForm] = useState({ name: '', completed: false })
 
   useEffect(() => {
     loadProjects()
@@ -185,6 +189,35 @@ export default function BoardPage() {
     }
   }
 
+  function openEditPointModal(point: Point, stageId: number) {
+    setEditPointModal({ isOpen: true, point, stageId })
+    setEditPointForm({ name: point.name, completed: point.completed })
+  }
+
+  async function handleSavePoint() {
+    if (!editPointModal.point) return
+    try {
+      await updatePoint(editPointModal.point.id, {
+        name: editPointForm.name,
+        completed: editPointForm.completed,
+      })
+      setEditPointModal({ isOpen: false, point: null, stageId: 0 })
+      await loadProjects()
+    } catch (error) {
+      console.error('Failed to update point:', error)
+    }
+  }
+
+  async function handleDeletePoint(pointId: number) {
+    if (!confirm('Are you sure you want to delete this point?')) return
+    try {
+      await deletePoint(pointId)
+      await loadProjects()
+    } catch (error) {
+      console.error('Failed to delete point:', error)
+    }
+  }
+
   async function handleSelectProject(project: Project) {
     try {
       // Load full project with hierarchy
@@ -230,6 +263,8 @@ export default function BoardPage() {
               onOpenComments={(targetType, targetId, targetName) => {
                 setCommentsPanel({ isOpen: true, targetType, targetId, projectId: selectedProject?.id || 0, targetName })
               }}
+              onEditPoint={openEditPointModal}
+              onDeletePoint={handleDeletePoint}
             />
           </div>
         ) : (
@@ -246,6 +281,67 @@ export default function BoardPage() {
         projectId={commentsPanel.projectId}
         targetName={commentsPanel.targetName}
       />
+
+      {/* Edit Point Modal */}
+      {editPointModal.isOpen && editPointModal.point && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/50 z-40"
+            onClick={() => setEditPointModal({ isOpen: false, point: null, stageId: 0 })}
+          />
+          {/* Modal */}
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-dark-900 border border-dark-700 rounded-lg shadow-2xl z-50 w-96 max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-dark-800 border-b border-dark-700 px-6 py-4 flex items-center justify-between">
+              <h3 className="text-xl font-bold text-white">Edit Point</h3>
+              <button
+                onClick={() => setEditPointModal({ isOpen: false, point: null, stageId: 0 })}
+                className="p-1 hover:bg-dark-700 rounded transition text-dark-300 hover:text-dark-100"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-4">
+              <Input
+                label="Point Name"
+                value={editPointForm.name}
+                onChange={(e) => setEditPointForm({ ...editPointForm, name: e.target.value })}
+                placeholder="Enter point name"
+              />
+
+              <div className="flex items-center gap-3 p-3 bg-dark-800 rounded-lg">
+                <input
+                  type="checkbox"
+                  checked={editPointForm.completed}
+                  onChange={(e) => setEditPointForm({ ...editPointForm, completed: e.target.checked })}
+                  className="w-5 h-5 accent-red-500 cursor-pointer"
+                />
+                <label className="text-sm text-dark-300 cursor-pointer">Mark as completed</label>
+              </div>
+
+              {/* Modal Buttons */}
+              <div className="flex gap-2 pt-4">
+                <Button
+                  onClick={handleSavePoint}
+                  className="flex-1 bg-red-600 hover:bg-red-700"
+                >
+                  Save Changes
+                </Button>
+                <Button
+                  onClick={() => setEditPointModal({ isOpen: false, point: null, stageId: 0 })}
+                  variant="secondary"
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
@@ -317,12 +413,16 @@ function ProjectDetailView({
   onToggleExpand,
   onBack,
   onOpenComments,
+  onEditPoint,
+  onDeletePoint,
 }: {
   project: Project
   expandedItems: Set<string>
   onToggleExpand: (key: string) => void
   onBack: () => void
   onOpenComments: (targetType: 'project' | 'module' | 'stage', targetId: number, targetName?: string) => void
+  onEditPoint: (point: Point, stageId: number) => void
+  onDeletePoint: (pointId: number) => void
 }) {
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -344,6 +444,8 @@ function ProjectDetailView({
           expandedItems={expandedItems}
           onToggleExpand={onToggleExpand}
           onOpenComments={onOpenComments}
+          onEditPoint={onEditPoint}
+          onDeletePoint={onDeletePoint}
         />
       ) : (
         <div className="text-center text-dark-400">No modules yet</div>
@@ -357,11 +459,15 @@ function TimelineView({
   expandedItems,
   onToggleExpand,
   onOpenComments,
+  onEditPoint,
+  onDeletePoint,
 }: {
   modules: Module[]
   expandedItems: Set<string>
   onToggleExpand: (key: string) => void
   onOpenComments: (targetType: 'project' | 'module' | 'stage', targetId: number, targetName?: string) => void
+  onEditPoint: (point: Point, stageId: number) => void
+  onDeletePoint: (pointId: number) => void
 }) {
   const timelineContainerRef = useRef<HTMLDivElement>(null)
   const firstIncompleteRef = useRef<HTMLDivElement>(null)
@@ -612,7 +718,7 @@ function TimelineView({
                                   {stage.points.map((point) => (
                                     <div
                                       key={point.id}
-                                      className={`flex items-start gap-2 text-xs p-2 rounded transition-colors ${
+                                      className={`flex items-start gap-2 text-xs p-2 rounded transition-colors group ${
                                         point.completed
                                           ? 'bg-green-500/10 text-green-400'
                                           : 'bg-dark-700/20 text-dark-300'
@@ -624,7 +730,29 @@ function TimelineView({
                                         readOnly
                                         className="mt-0.5 cursor-default accent-red-500"
                                       />
-                                      <span>{point.name}</span>
+                                      <span className="flex-1">{point.name}</span>
+                                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            onEditPoint(point, stage.id)
+                                          }}
+                                          className="p-1 hover:bg-dark-600/50 rounded text-blue-400 hover:text-blue-300"
+                                          title="Edit point"
+                                        >
+                                          <Edit2 size={14} />
+                                        </button>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            onDeletePoint(point.id)
+                                          }}
+                                          className="p-1 hover:bg-dark-600/50 rounded text-red-400 hover:text-red-300"
+                                          title="Delete point"
+                                        >
+                                          <Trash2 size={14} />
+                                        </button>
+                                      </div>
                                     </div>
                                   ))}
                                 </div>
