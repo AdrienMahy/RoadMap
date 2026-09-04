@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react'
-import { Trash2, Save, UserPlus, AlertCircle } from 'lucide-react'
+import { Trash2, Save, UserPlus, AlertCircle, Edit2, X } from 'lucide-react'
 import { Button } from './Button'
 import { Input } from './Input'
 import { Card } from './Card'
-import { api, fetchAllUsers, updateUserRole, deleteUser } from '../lib/api'
+import { api, fetchAllUsers, updateUserRole, deleteUser, updateUserProfile } from '../lib/api'
 
 interface User {
   id: number
   username: string
   email: string
+  firstName?: string
+  lastName?: string
   role: string
   createdAt: string
 }
@@ -22,7 +24,14 @@ export function UsersManagement() {
   const [editingRole, setEditingRole] = useState('')
   const [newUsername, setNewUsername] = useState('')
   const [newPassword, setNewPassword] = useState('')
+  const [newFirstName, setNewFirstName] = useState('')
+  const [newLastName, setNewLastName] = useState('')
+  const [newEmail, setNewEmail] = useState('')
   const [newRole, setNewRole] = useState('Board')
+  // Modal edit state
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [editForm, setEditForm] = useState({ firstName: '', lastName: '', email: '', password: '', role: 'Board' })
 
   // Load all users
   useEffect(() => {
@@ -83,18 +92,62 @@ export function UsersManagement() {
       await api.post('/auth/register', {
         username: newUsername,
         password: newPassword,
-        email: '',
+        email: newEmail,
+        firstName: newFirstName,
+        lastName: newLastName,
         role: newRole,
       })
 
       setNewUsername('')
       setNewPassword('')
+      setNewFirstName('')
+      setNewLastName('')
+      setNewEmail('')
       setNewRole('Board')
       setSuccess('User created successfully')
       await loadUsers()
       setTimeout(() => setSuccess(''), 3000)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create user'
+      setError(message)
+    }
+  }
+
+  function openEditModal(user: User) {
+    setEditingUser(user)
+    setEditForm({
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      email: user.email || '',
+      password: '',
+      role: user.role,
+    })
+    setEditModalOpen(true)
+  }
+
+  async function handleSaveEditUser() {
+    if (!editingUser) return
+
+    try {
+      setError('')
+      const updates: any = {
+        firstName: editForm.firstName,
+        lastName: editForm.lastName,
+        email: editForm.email,
+        role: editForm.role,
+      }
+      if (editForm.password) {
+        updates.password = editForm.password
+      }
+
+      await updateUserProfile(editingUser.id, updates)
+      setSuccess('User updated successfully')
+      setEditModalOpen(false)
+      setEditingUser(null)
+      await loadUsers()
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to update user'
       setError(message)
     }
   }
@@ -124,30 +177,55 @@ export function UsersManagement() {
       {/* Add New User Form */}
       <Card className="p-6 bg-dark-900 border-dark-700">
         <h3 className="text-lg font-semibold mb-4 text-dark-50">Create New User</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-          <Input
-            label="Username"
-            value={newUsername}
-            onChange={(e) => setNewUsername(e.target.value)}
-            placeholder="Enter username"
-          />
-          <Input
-            label="Password"
-            type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="Enter password"
-          />
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-dark-300">Role</label>
-            <select
-              value={newRole}
-              onChange={(e) => setNewRole(e.target.value)}
-              className="w-full px-3 py-2 bg-dark-800 border border-dark-600 rounded-lg text-dark-100 hover:border-dark-500 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
-            >
-              <option value="Board">Board</option>
-              <option value="Administrateur">Administrateur</option>
-            </select>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="First Name"
+              value={newFirstName}
+              onChange={(e) => setNewFirstName(e.target.value)}
+              placeholder="Enter first name"
+            />
+            <Input
+              label="Last Name"
+              value={newLastName}
+              onChange={(e) => setNewLastName(e.target.value)}
+              placeholder="Enter last name"
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Username"
+              value={newUsername}
+              onChange={(e) => setNewUsername(e.target.value)}
+              placeholder="Enter username"
+            />
+            <Input
+              label="Email"
+              type="email"
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+              placeholder="Enter email"
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Password"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Enter password"
+            />
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-dark-300">Role</label>
+              <select
+                value={newRole}
+                onChange={(e) => setNewRole(e.target.value)}
+                className="w-full px-3 py-2 bg-dark-800 border border-dark-600 rounded-lg text-dark-100 hover:border-dark-500 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
+              >
+                <option value="Board">Board</option>
+                <option value="Administrateur">Administrateur</option>
+              </select>
+            </div>
           </div>
           <Button
             onClick={handleAddUser}
@@ -179,9 +257,11 @@ export function UsersManagement() {
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
                       <div>
-                        <p className="font-semibold text-dark-50">{user.username}</p>
+                        <p className="font-semibold text-dark-50">
+                          {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.username}
+                        </p>
                         <p className="text-sm text-dark-400">
-                          {user.email} • ID: {user.id}
+                          @{user.username} {user.email && `• ${user.email}`} • ID: {user.id}
                         </p>
                         <p className="text-xs text-dark-500">
                           Created: {new Date(user.createdAt).toLocaleString()}
@@ -240,14 +320,25 @@ export function UsersManagement() {
 
                   {/* Delete Button */}
                   {user.username !== 'admin' && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleDeleteUser(user.id, user.username)}
-                      className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                    >
-                      <Trash2 size={18} />
-                    </Button>
+                    <>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => openEditModal(user)}
+                        className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+                        title="Edit user"
+                      >
+                        <Edit2 size={18} />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleDeleteUser(user.id, user.username)}
+                        className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                      >
+                        <Trash2 size={18} />
+                      </Button>
+                    </>
                   )}
                 </div>
               </Card>
@@ -255,6 +346,103 @@ export function UsersManagement() {
           </div>
         )}
       </div>
+
+      {/* Edit User Modal */}
+      {editModalOpen && editingUser && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/50 z-40"
+            onClick={() => setEditModalOpen(false)}
+          />
+          {/* Modal */}
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-dark-900 border border-dark-700 rounded-lg shadow-2xl z-50 w-96 max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-dark-800 border-b border-dark-700 px-6 py-4 flex items-center justify-between">
+              <h3 className="text-xl font-bold text-white">Edit User</h3>
+              <button
+                onClick={() => setEditModalOpen(false)}
+                className="p-1 hover:bg-dark-700 rounded transition text-dark-300 hover:text-dark-100"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-dark-300 mb-2">Username</label>
+                <Input
+                  value={editingUser.username}
+                  disabled
+                  className="bg-dark-800 cursor-not-allowed opacity-60"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  label="First Name"
+                  value={editForm.firstName}
+                  onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })}
+                  placeholder="First name"
+                />
+                <Input
+                  label="Last Name"
+                  value={editForm.lastName}
+                  onChange={(e) => setEditForm({ ...editForm, lastName: e.target.value })}
+                  placeholder="Last name"
+                />
+              </div>
+
+              <Input
+                label="Email"
+                type="email"
+                value={editForm.email}
+                onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                placeholder="Email address"
+              />
+
+              <Input
+                label="Password (leave empty to keep current)"
+                type="password"
+                value={editForm.password}
+                onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+                placeholder="Enter new password"
+              />
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-dark-300">Role</label>
+                <select
+                  value={editForm.role}
+                  onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                  className="w-full px-3 py-2 bg-dark-800 border border-dark-600 rounded-lg text-dark-100 hover:border-dark-500 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                >
+                  <option value="Board">Board</option>
+                  <option value="Administrateur">Administrateur</option>
+                </select>
+              </div>
+
+              {/* Modal Buttons */}
+              <div className="flex gap-2 pt-4">
+                <Button
+                  onClick={handleSaveEditUser}
+                  className="flex-1 bg-red-600 hover:bg-red-700"
+                >
+                  <Save size={16} className="mr-1" /> Save Changes
+                </Button>
+                <Button
+                  onClick={() => setEditModalOpen(false)}
+                  variant="secondary"
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
+

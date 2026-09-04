@@ -4,8 +4,11 @@ import {
   fetchProject,
   createProject,
   deleteProject,
+  updateProject,
   createModule,
   updateModule,
+  fetchModule,
+  fetchStage,
   updateStage,
   updatePoint,
   deleteModule,
@@ -21,8 +24,9 @@ import { Textarea } from '../components/Textarea'
 import { Badge } from '../components/Badge'
 import { IconPicker } from '../components/IconPicker'
 import { PrioritySelector } from '../components/PrioritySelector'
+import { EditOffCanvas } from '../components/EditOffCanvas'
 import { UsersManagement } from '../components/UsersManagement'
-import { ChevronDown, ChevronRight, Trash2, Save, CheckCircle, Clock, Zap, AlertCircle, AlertTriangle, AlertOctagon, Minus, BarChart3, Users, ShieldAlert } from 'lucide-react'
+import { ChevronDown, ChevronRight, Trash2, Save, CheckCircle, Clock, Zap, AlertCircle, AlertTriangle, AlertOctagon, Minus, BarChart3, Users, ShieldAlert, Info } from 'lucide-react'
 import { getStatusColor, calculateStatus, getPriorityColor, getStatusBorderColor, getPriorityIcon, getStatusIconName, getPriorityIconName, getStatusIconColor, getPriorityIconColor, getPriorityLabel } from '../lib/status'
 import { getIconByName } from '../lib/icons'
 
@@ -125,6 +129,11 @@ function EditPanel({
   const [formData, setFormData] = useState(data)
   const [saving, setSaving] = useState(false)
 
+  // Update formData when data changes (e.g., when selecting a different stage)
+  useEffect(() => {
+    setFormData(data)
+  }, [data])
+
   async function handleSave() {
     setSaving(true)
     try {
@@ -176,6 +185,60 @@ function EditPanel({
       </div>
 
       <div className="space-y-4">
+        {/* Info Section for Stages */}
+        {item.type === 'stage' && (
+          <div className="bg-dark-800/50 border border-dark-600 rounded-lg p-4 space-y-3">
+            <div className="text-xs text-dark-400 font-medium uppercase tracking-wide">Stage Information</div>
+            
+            {/* Status & Progress Row */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-xs text-dark-400 mb-1">Status</p>
+                <Badge className={getStatusColor(calculateStatus(formData.points || []).toString())}>
+                  {calculateStatus(formData.points || []).toString()}
+                </Badge>
+              </div>
+              <div>
+                <p className="text-xs text-dark-400 mb-1">Progress</p>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-2 bg-dark-700 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-red-500 to-red-600 transition-all"
+                      style={{ width: `${formData.progress || 0}%` }}
+                    />
+                  </div>
+                  <span className="text-xs font-semibold text-red-400">{Math.round(formData.progress || 0)}%</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Validation Info */}
+            {formData.validatedAt && (
+              <div>
+                <p className="text-xs text-dark-400 mb-1">Validated</p>
+                <p className="text-sm text-green-400 font-medium flex items-center gap-1">
+                  ✓ {new Date(formData.validatedAt).toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' })}
+                </p>
+              </div>
+            )}
+
+            {/* Points Summary */}
+            {formData.points && formData.points.length > 0 && (
+              <div>
+                <p className="text-xs text-dark-400 mb-2">Points</p>
+                <div className="space-y-1">
+                  {formData.points.map((point: Point) => (
+                    <div key={point.id} className="flex items-center gap-2 text-xs">
+                      <input type="checkbox" checked={point.completed} disabled className="accent-red-500 cursor-not-allowed" />
+                      <span className={point.completed ? 'text-dark-400 line-through' : 'text-dark-200'}>{point.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Name */}
         <div>
           <label className="block text-sm font-medium text-dark-300 mb-2">Name</label>
@@ -281,6 +344,8 @@ export default function DevPage() {
   const [projectForm, setProjectForm] = useState({ name: '', description: '', status: 'planned' })
   const [selectedItem, setSelectedItem] = useState<{ type: 'project' | 'module' | 'stage' | 'point'; id: number } | null>(null)
   const [activeTab, setActiveTab] = useState<'projects' | 'users'>('projects')
+  const [offCanvasOpen, setOffCanvasOpen] = useState(false)
+  const [savingOffCanvas, setSavingOffCanvas] = useState(false)
 
   useEffect(() => {
     loadProjects()
@@ -426,6 +491,76 @@ export default function DevPage() {
     }
   }
 
+  function handleSelectItem(type: string, id: number) {
+    setSelectedItem({ type: type as 'project' | 'module' | 'stage' | 'point', id })
+    
+    // Reload project to ensure we have fresh data
+    if (expandedProject) {
+      reloadProject(expandedProject)
+    }
+    
+    setOffCanvasOpen(true)
+  }
+
+  async function handleSaveEdit(data: any) {
+    if (!selectedItem) return
+    setSavingOffCanvas(true)
+    try {
+      if (selectedItem.type === 'project') {
+        await updateProject(selectedItem.id, data)
+      } else if (selectedItem.type === 'module') {
+        await updateModule(selectedItem.id, data)
+      } else if (selectedItem.type === 'stage') {
+        await updateStage(selectedItem.id, data)
+      }
+      
+      // Reload project to reflect changes
+      if (expandedProject) {
+        await reloadProject(expandedProject)
+      } else {
+        await loadProjects()
+      }
+      setOffCanvasOpen(false)
+    } catch (error) {
+      console.error('Failed to save:', error)
+    } finally {
+      setSavingOffCanvas(false)
+    }
+  }
+
+  async function handleAddChild(parentId: number, childType: string, childName: string) {
+    if (!expandedProject || !selectedItem) return
+    setSavingOffCanvas(true)
+    try {
+      if (childType === 'module') {
+        await createModule({
+          projectId: parentId,
+          name: childName,
+          description: '',
+          priority: 'medium',
+        })
+      } else if (childType === 'stage') {
+        // Get module to find correct module ID
+        const item = findItemInProjects(parentId)
+        if (item && item.id) {
+          await createStage({
+            moduleId: parentId,
+            projectId: expandedProject,
+            name: childName,
+            description: '',
+            priority: 'medium',
+          })
+        }
+      }
+      await reloadProject(expandedProject)
+      setOffCanvasOpen(false)
+    } catch (error) {
+      console.error('Failed to add child:', error)
+    } finally {
+      setSavingOffCanvas(false)
+    }
+  }
+
   function findItemInProjects(id: number): any {
     for (const project of projects) {
       if (project.id === id) return project
@@ -438,6 +573,21 @@ export default function DevPage() {
           }
         }
       }
+    }
+    return {}
+  }
+
+  async function getItemById(type: string, id: number): Promise<any> {
+    try {
+      if (type === 'project') {
+        return await fetchProject(id)
+      } else if (type === 'module') {
+        return await fetchModule(id)
+      } else if (type === 'stage') {
+        return await fetchStage(id)
+      }
+    } catch (error) {
+      console.error(`Failed to fetch ${type}:`, error)
     }
     return {}
   }
@@ -483,7 +633,7 @@ export default function DevPage() {
         {activeTab === 'projects' ? (
           <>
         {/* Main Grid */}
-        <div className="grid grid-cols-3 gap-6 p-6 h-[calc(100vh-220px)]">
+        <div className="grid grid-cols-1 gap-6 p-6 h-[calc(100vh-220px)]">
           {/* Left Panel */}
           <div className="col-span-2 overflow-auto pr-4 space-y-4">
             {!showNewProjectDialog && (
@@ -553,6 +703,13 @@ export default function DevPage() {
                           </div>
                         </div>
                       </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleSelectItem('project', project.id); }}
+                        className="p-1.5 text-dark-400 hover:text-red-400 transition"
+                        title="Show project details"
+                      >
+                        <Info size={18} />
+                      </button>
                     </div>
                   </div>
 
@@ -563,7 +720,7 @@ export default function DevPage() {
                           <ModuleItemTree
                             key={module.id}
                             module={module}
-                            onSelect={(type, id) => setSelectedItem({ type, id })}
+                            onSelect={handleSelectItem}
                             selectedItem={selectedItem}
                             onAddPoint={handleAddPoint}
                             expandedModules={expandedModules}
@@ -593,12 +750,6 @@ export default function DevPage() {
                           {project.modules ? 'No modules yet' : 'Loading modules...'}
                         </div>
                       )}
-                      <Button
-                        onClick={() => handleCreateModule(project.id)}
-                        className="w-full bg-dark-600 hover:bg-dark-500 text-xs py-2"
-                      >
-                        + Add Module
-                      </Button>
                     </div>
                   )}
                 </div>
@@ -606,27 +757,30 @@ export default function DevPage() {
             </div>
           </div>
 
-          {/* Right Panel - Edit Form */}
-          <div className="col-span-1 border-l border-dark-700 pl-6 overflow-auto">
-            {selectedItem ? (
-              <EditPanel
-                item={selectedItem}
-                data={findItemInProjects(selectedItem.id)}
-                onUpdate={() => {
-                  if (expandedProject) {
-                    reloadProject(expandedProject)
-                  } else {
-                    loadProjects()
+          {/* OffCanvas - Edit Form */}
+          <EditOffCanvas
+            key={selectedItem ? `${selectedItem.type}-${selectedItem.id}` : 'empty'}
+            isOpen={offCanvasOpen}
+            onClose={() => setOffCanvasOpen(false)}
+            item={
+              selectedItem
+                ? {
+                    type: selectedItem.type as 'project' | 'module' | 'stage',
+                    id: selectedItem.id,
                   }
-                  setSelectedItem(null)
-                }}
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full text-dark-400 text-center">
-                <p>Select an item from the list to edit</p>
-              </div>
-            )}
-          </div>
+                : null
+            }
+            onSave={handleSaveEdit}
+            onDelete={async () => {
+              if (expandedProject) {
+                await reloadProject(expandedProject)
+              } else {
+                await loadProjects()
+              }
+            }}
+            onAddChild={handleAddChild}
+            isSaving={savingOffCanvas}
+          />
         </div>
           </>
         ) : (
@@ -675,11 +829,10 @@ function ModuleItemTree({
   return (
     <div>
       <div
-        onClick={() => onSelect('module', module.id)}
-        className={`${getStatusBorderColor(status)} p-3 rounded border cursor-pointer transition ${
+        className={`${getStatusBorderColor(status)} p-3 rounded border transition ${
           isSelected
             ? 'bg-red-500/20 border-red-500'
-            : 'bg-dark-700/40 border-dark-600 hover:bg-dark-600/50'
+            : 'bg-dark-700/40 border-dark-600'
         }`}
       >
         <div className="flex items-center gap-3">
@@ -706,6 +859,13 @@ function ModuleItemTree({
               <span className="text-xs text-dark-300">{Math.round(module.progress || 0)}%</span>
             </div>
           </div>
+          <button
+            onClick={(e) => { e.stopPropagation(); onSelect('module', module.id); }}
+            className="p-1.5 text-dark-400 hover:text-red-400 transition"
+            title="Show module details"
+          >
+            <Info size={18} />
+          </button>
         </div>
       </div>
 
@@ -788,11 +948,10 @@ function StageItemTree({
   return (
     <div className={expanded ? 'bg-dark-700/20 rounded' : ''}>
       <div
-        onClick={() => onSelect('stage', stage.id)}
         className={`${getStatusBorderColor(calculateStatus(stage.points).toString())} p-2 rounded border text-sm transition ${
           isSelected
             ? 'bg-red-500/20 border-red-500'
-            : 'bg-dark-700/30 border-dark-600 hover:bg-dark-600/40'
+            : 'bg-dark-700/30 border-dark-600'
         }`}
       >
         <div className="flex items-center gap-2">
@@ -849,7 +1008,7 @@ function StageItemTree({
             </div>
           </div>
 
-          {/* Stop toggle button - aligned right */}
+          {/* Stop toggle button */}
           <button
             onClick={handleToggleStop}
             className={`px-2 py-1 rounded text-xs font-medium transition whitespace-nowrap ${
@@ -859,6 +1018,15 @@ function StageItemTree({
             }`}
           >
             {isStopped ? '🛑 Stopped' : 'Stop'}
+          </button>
+
+          {/* Info button - aligned right */}
+          <button
+            onClick={(e) => { e.stopPropagation(); onSelect('stage', stage.id); }}
+            className="p-1 text-dark-400 hover:text-red-400 transition"
+            title="Show stage details"
+          >
+            <Info size={16} />
           </button>
         </div>
       </div>
@@ -996,8 +1164,7 @@ function PointItemTree({
         </div>
         
         <span 
-          onClick={() => onSelect('point', point.id)}
-          className={`flex-1 text-xs cursor-pointer ${point.completed ? 'line-through text-dark-400' : 'text-white'}`}
+          className={`flex-1 text-xs ${point.completed ? 'line-through text-dark-400' : 'text-white'}`}
         >
           {point.name}
         </span>

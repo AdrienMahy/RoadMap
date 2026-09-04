@@ -80,13 +80,16 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id)
-    const { name, description, status, orderIndex } = req.body
+    const { name, description, status, orderIndex, icon, priority, projectId } = req.body
 
     const module = await modulesService.updateModule(id, {
       name,
       description,
       status,
       orderIndex,
+      icon,
+      priority,
+      projectId,
     })
 
     if (!module) {

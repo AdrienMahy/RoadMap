@@ -124,6 +124,11 @@ export async function updateUserRole(userId: number, role: string) {
   return data
 }
 
+export async function updateUserProfile(userId: number, updates: any) {
+  const { data } = await api.put(`/auth/users/${userId}`, updates)
+  return data
+}
+
 export async function deleteUser(userId: number) {
   const { data } = await api.delete(`/auth/users/${userId}`)
   return data

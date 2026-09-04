@@ -400,31 +400,6 @@ function TimelineView({
     }
   }
 
-  // Module color mapping
-  const moduleColors: Record<string, { bg: string; border: string; text: string }> = {
-    'AMS Module': { bg: 'bg-blue-500/10', border: 'border-blue-500/30', text: 'text-blue-400' },
-    'Infrastructure': { bg: 'bg-purple-500/10', border: 'border-purple-500/30', text: 'text-purple-400' },
-    'API Development': { bg: 'bg-cyan-500/10', border: 'border-cyan-500/30', text: 'text-cyan-400' },
-    'Testing & QA': { bg: 'bg-green-500/10', border: 'border-green-500/30', text: 'text-green-400' },
-  }
-
-  // Flatten all stages from all modules with their module info
-  const allStages = modules.flatMap((module) =>
-    (module.stages || []).map((stage) => ({
-      ...stage,
-      moduleName: module.name,
-      moduleIcon: module.icon,
-      modulePriority: module.priority,
-    }))
-  )
-
-  // Sort by delivery date
-  const sortedStages = allStages.sort((a, b) => {
-    if (!a.deliveryDate) return 1
-    if (!b.deliveryDate) return -1
-    return new Date(a.deliveryDate).getTime() - new Date(b.deliveryDate).getTime()
-  })
-
   // Check if stage is on time / behind / ahead
   const getDateStatus = (dateStr: string | undefined) => {
     if (!dateStr) return 'unknown'
@@ -439,192 +414,229 @@ function TimelineView({
 
   // Find the FIRST incomplete stage to scroll to
   let firstIncompleteId: number | null = null
-  for (let i = 0; i < sortedStages.length; i++) {
-    const status = calculateStatus(sortedStages[i].points).toString()
-    if (status !== 'completed') {
-      firstIncompleteId = sortedStages[i].id
-      break
+  for (const module of modules) {
+    for (const stage of module.stages || []) {
+      const status = calculateStatus(stage.points).toString()
+      if (status !== 'completed') {
+        firstIncompleteId = stage.id
+        break
+      }
     }
+    if (firstIncompleteId) break
   }
 
   return (
     <div ref={timelineContainerRef} className="relative flex-1 py-4 overflow-y-auto pr-4 flex flex-col">
-      {/* Timeline line container */}
-      <div className="absolute top-0 left-0 right-0 bottom-0 pointer-events-none">
-        <div className="absolute top-0 bottom-0 bg-gradient-to-b from-red-500/40 via-red-500/25 to-red-500/40" style={{ width: '5px', left: '0.85rem', height: '100%' }} />
-      </div>
-
-      {/* Timeline items */}
+      {/* Timeline items - Modules and their Stages */}
       <div className="relative space-y-6 flex-1 flex flex-col">
-        {sortedStages.map((stage, idx) => {
-          const stageKey = `stage-${stage.id}`
-          const expanded = expandedItems.has(stageKey)
-          // Check if stage is manually stopped, otherwise calculate from points
-          const stageStatus = stage.status === 'stopped' ? 'stopped' : calculateStatus(stage.points).toString()
-          const dateStatus = getDateStatus(stage.deliveryDate)
-          const isFirstIncomplete = stage.id === firstIncompleteId
-
+        {modules.map((module) => {
+          const moduleKey = `module-${module.id}`
+          const moduleExpanded = expandedItems.has(moduleKey)
+          const moduleStatus = calculateStatus(module.stages).toString()
+          
           return (
-            <div key={stage.id} className="relative flex gap-4" ref={isFirstIncomplete ? firstIncompleteRef : null}>
-              {/* Timeline dot - centered */}
-              <div className="flex flex-col items-center pt-0.5">
-                <div className={`flex h-8 w-8 items-center justify-center rounded-full flex-shrink-0 ring-2 ring-dark-900 shadow-sm relative z-10 ${
-                  stageStatus === 'completed' ? 'bg-green-500' :
-                  stageStatus === 'in-progress' ? 'bg-blue-500' :
-                  stageStatus === 'stopped' ? 'bg-red-600' :
-                  'bg-red-500'
-                }`}>
-                  {stageStatus === 'completed' ? (
-                    <CheckCircle size={18} className="text-white" />
-                  ) : stageStatus === 'in-progress' ? (
-                    <Zap size={18} className="text-white" />
-                  ) : stageStatus === 'stopped' ? (
-                    <AlertOctagon size={18} className="text-white" />
+            <div key={module.id} className="space-y-3">
+              {/* MODULE HEADER */}
+              <div
+                onClick={() => onToggleExpand(moduleKey)}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg border border-dark-600/50 bg-dark-800/30 cursor-pointer hover:bg-dark-800/50 transition-all"
+              >
+                <div className="flex items-center gap-2">
+                  {moduleExpanded ? (
+                    <ChevronDown size={18} className="text-dark-400 flex-shrink-0" />
                   ) : (
-                    <Clock size={18} className="text-white" />
+                    <ChevronRight size={18} className="text-dark-400 flex-shrink-0" />
                   )}
                 </div>
-              </div>
-
-              {/* Card content */}
-              <div
-                onClick={() => onToggleExpand(stageKey)}
-                className="flex-1 cursor-pointer py-1"
-              >
-                <div className="rounded-lg border border-dark-600/50 bg-dark-800/30 p-4 transition-all duration-200 hover:border-dark-500/80 hover:bg-dark-800/50 hover:shadow-sm">
-                  {/* Header - Title with code */}
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div className="flex-1">
-                      <h3 className="text-base font-semibold text-white leading-tight">{stage.name}</h3>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onOpenComments('stage', stage.id, stage.name)
-                        }}
-                        className="text-dark-400 hover:text-blue-400 transition p-1 rounded hover:bg-dark-700/50 relative"
-                        title="Comments"
-                      >
-                        <MessageCircle size={16} />
-                        {stage.commentCount && stage.commentCount > 0 && (
-                          <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
-                        )}
-                      </button>
-                      <span className="text-xs font-mono text-dark-500 bg-dark-700/50 px-2 py-1 rounded">
-                        {stage.moduleName.substring(0, 2).toUpperCase()}
-                      </span>
-                      {expanded ? (
-                        <ChevronDown size={16} className="text-dark-400 flex-shrink-0" />
-                      ) : (
-                        <ChevronRight size={16} className="text-dark-400 flex-shrink-0" />
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Description */}
-                  <p className="text-xs text-dark-400 mb-3 line-clamp-2">{stage.moduleName}</p>
-
-                  {/* Status and Priority badges row */}
-                  <div className="flex flex-wrap gap-2 items-center">
-                    {/* Status badge */}
-                    <div className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-all ${
-                      stageStatus === 'completed' ? 'bg-green-500/15 text-green-400' :
-                      stageStatus === 'in-progress' ? 'bg-blue-500/15 text-blue-400' :
-                      stageStatus === 'stopped' ? 'bg-red-500/15 text-red-400' :
-                      'bg-yellow-500/15 text-yellow-400'
-                    }`}>
-                      <div className={`w-1.5 h-1.5 rounded-full ${
-                        stageStatus === 'completed' ? 'bg-green-400' :
-                        stageStatus === 'in-progress' ? 'bg-blue-400' :
-                        stageStatus === 'stopped' ? 'bg-red-400' :
-                        'bg-yellow-400'
-                      }`} />
-                      {stageStatus === 'completed' ? 'Shipped' : stageStatus === 'in-progress' ? 'In progress' : stageStatus === 'stopped' ? 'Stopped' : 'Pending'}
-                    </div>
-
-                    {/* Priority badge */}
-                    <div className={`px-2 py-1 rounded text-xs font-medium bg-dark-700/50 ${getPriorityColor(stage.priority || 'medium')}`}>
-                      {getPriorityLabel(stage.priority || 'medium')}
-                    </div>
-
-                    {/* Dates section - aligned right */}
-                    <div className="ml-auto flex flex-col gap-2 items-end">
-                      {/* Delivery date - planned */}
-                      <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md font-medium text-xs transition-colors ${
-                        dateStatus === 'late' ? 'bg-red-500/15 text-red-300 border border-red-500/30' :
-                        dateStatus === 'ahead' ? 'bg-blue-500/15 text-blue-300 border border-blue-500/30' :
-                        'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                      }`}>
-                        <Calendar size={14} />
-                        <span>Livraison: {formatDate(stage.deliveryDate)}</span>
-                      </div>
-                      
-                      {/* Validation date - actual */}
-                      {stage.validatedAt && (
-                        <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-green-500/15 text-green-300 border border-green-500/30 font-semibold text-xs">
-                          <BadgeCheck size={14} />
-                          <span>Validé: {new Date(stage.validatedAt).toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Progress bar */}
-                  <div className="mt-4 space-y-1.5">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-dark-400 font-medium">Progression</span>
-                      <span className={`text-xs font-semibold ${(stage.progress || 0) === 100 ? 'text-green-400' : 'text-dark-300'}`}>{Math.round(stage.progress || 0)}%</span>
-                    </div>
-                    <div className="w-full h-2 bg-dark-700/30 rounded-full overflow-hidden">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-white text-sm">{module.name}</h3>
+                  {module.description && (
+                    <p className="text-xs text-dark-400 mt-1">{module.description}</p>
+                  )}
+                </div>
+                <div className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium ${
+                  moduleStatus === 'completed' ? 'bg-green-500/15 text-green-400' :
+                  moduleStatus === 'in-progress' ? 'bg-blue-500/15 text-blue-400' :
+                  moduleStatus === 'stopped' ? 'bg-red-500/15 text-red-400' :
+                  'bg-yellow-500/15 text-yellow-400'
+                }`}>
+                  <div className={`w-1.5 h-1.5 rounded-full ${
+                    moduleStatus === 'completed' ? 'bg-green-400' :
+                    moduleStatus === 'in-progress' ? 'bg-blue-400' :
+                    moduleStatus === 'stopped' ? 'bg-red-400' :
+                    'bg-yellow-400'
+                  }`} />
+                  {moduleStatus === 'completed' ? 'Shipped' : moduleStatus === 'in-progress' ? 'In progress' : moduleStatus === 'stopped' ? 'Stopped' : 'Pending'}
+                </div>
+                {module.progress !== undefined && (
+                  <div className="flex items-center gap-2">
+                    <div className="w-12 h-1.5 bg-dark-700/30 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all duration-300 ${
-                          (stage.progress || 0) === 100
-                            ? 'bg-gradient-to-r from-green-500/60 to-green-400/40'
-                            : 'bg-gradient-to-r from-red-500/60 to-red-400/40'
+                          module.progress === 100
+                            ? 'bg-green-500/60'
+                            : 'bg-red-500/60'
                         }`}
-                        style={{ width: `${stage.progress || 0}%` }}
+                        style={{ width: `${module.progress}%` }}
                       />
                     </div>
+                    <span className="text-xs font-semibold text-dark-300">{Math.round(module.progress)}%</span>
                   </div>
-
-                  {/* Expanded deliverables */}
-                  {expanded && stage.points && stage.points.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-dark-600/30 space-y-2">
-                      <h4 className="text-xs font-semibold uppercase text-dark-400 tracking-wider">Deliverables</h4>
-                      <div className="space-y-1.5">
-                        {stage.points.map((point) => (
-                          <div
-                            key={point.id}
-                            className={`flex items-start gap-2.5 text-xs p-2 rounded transition-colors ${
-                              point.completed
-                                ? 'bg-green-500/10 text-green-400'
-                                : 'bg-dark-700/20 text-dark-300 hover:bg-dark-700/40'
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={point.completed}
-                              readOnly
-                              disabled
-                              className="mt-0.5 cursor-default accent-red-500"
-                            />
-                            <div className="flex-1 flex items-center justify-between gap-2">
-                              <span>{point.name}</span>
-                              {point.completed && point.completedAt && (
-                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-green-500/15 border border-green-500/20 text-xs font-medium whitespace-nowrap">
-                                  <BadgeCheck size={11} />
-                                  <span>{new Date(point.completedAt).toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                )}
               </div>
+
+              {/* STAGES WITHIN MODULE */}
+              {moduleExpanded && module.stages && module.stages.length > 0 && (
+                <div className="pl-6 space-y-4 relative">
+                  {/* Timeline line for this module's stages */}
+                  <div className="absolute left-0 top-0 bottom-0 pointer-events-none">
+                    <div className="absolute top-0 bottom-0 bg-gradient-to-b from-red-500/40 via-red-500/25 to-red-500/40" style={{ width: '5px', left: 'calc(1.5rem + 0.875rem - 2.5px)' }} />
+                  </div>
+                  {module.stages.map((stage) => {
+                    const stageKey = `stage-${stage.id}`
+                    const stageExpanded = expandedItems.has(stageKey)
+                    const stageStatus = stage.status === 'stopped' ? 'stopped' : calculateStatus(stage.points).toString()
+                    const dateStatus = getDateStatus(stage.deliveryDate)
+                    const isFirstIncomplete = stage.id === firstIncompleteId
+
+                    return (
+                      <div key={stage.id} className="relative flex gap-4" ref={isFirstIncomplete ? firstIncompleteRef : null}>
+                        {/* Timeline dot */}
+                        <div className="flex flex-col items-center justify-start">
+                          <div className={`flex h-7 w-7 items-center justify-center rounded-full flex-shrink-0 ring-2 ring-dark-900 shadow-sm relative z-10 ${
+                            stageStatus === 'completed' ? 'bg-green-500' :
+                            stageStatus === 'in-progress' ? 'bg-blue-500' :
+                            stageStatus === 'stopped' ? 'bg-red-600' :
+                            'bg-red-500'
+                          }`}>
+                            {stageStatus === 'completed' ? (
+                              <CheckCircle size={16} className="text-white" />
+                            ) : stageStatus === 'in-progress' ? (
+                              <Zap size={16} className="text-white" />
+                            ) : stageStatus === 'stopped' ? (
+                              <AlertOctagon size={16} className="text-white" />
+                            ) : (
+                              <Clock size={16} className="text-white" />
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Stage Card */}
+                        <div
+                          onClick={() => onToggleExpand(stageKey)}
+                          className="flex-1 cursor-pointer py-1"
+                        >
+                          <div className="rounded-lg border border-dark-600/50 bg-dark-800/30 p-4 transition-all duration-200 hover:border-dark-500/80 hover:bg-dark-800/50 hover:shadow-sm">
+                            {/* Header - Title */}
+                            <div className="flex items-start justify-between gap-3 mb-2">
+                              <div className="flex-1">
+                                <h4 className="text-sm font-semibold text-white leading-tight">{stage.name}</h4>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    onOpenComments('stage', stage.id, stage.name)
+                                  }}
+                                  className="text-dark-400 hover:text-blue-400 transition p-1 rounded hover:bg-dark-700/50 relative"
+                                  title="Comments"
+                                >
+                                  <MessageCircle size={16} />
+                                  {stage.commentCount && stage.commentCount > 0 && (
+                                    <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
+                                  )}
+                                </button>
+                                {stageExpanded ? (
+                                  <ChevronDown size={16} className="text-dark-400 flex-shrink-0" />
+                                ) : (
+                                  <ChevronRight size={16} className="text-dark-400 flex-shrink-0" />
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Status and Priority badges row */}
+                            <div className="flex flex-wrap gap-2 items-center mb-3">
+                              {/* Status badge */}
+                              <div className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-all ${
+                                stageStatus === 'completed' ? 'bg-green-500/15 text-green-400' :
+                                stageStatus === 'in-progress' ? 'bg-blue-500/15 text-blue-400' :
+                                stageStatus === 'stopped' ? 'bg-red-500/15 text-red-400' :
+                                'bg-yellow-500/15 text-yellow-400'
+                              }`}>
+                                <div className={`w-1.5 h-1.5 rounded-full ${
+                                  stageStatus === 'completed' ? 'bg-green-400' :
+                                  stageStatus === 'in-progress' ? 'bg-blue-400' :
+                                  stageStatus === 'stopped' ? 'bg-red-400' :
+                                  'bg-yellow-400'
+                                }`} />
+                                {stageStatus === 'completed' ? 'Shipped' : stageStatus === 'in-progress' ? 'In progress' : stageStatus === 'stopped' ? 'Stopped' : 'Pending'}
+                              </div>
+
+                              {/* Dates section - aligned right */}
+                              <div className="ml-auto flex flex-col gap-1 items-end text-xs">
+                                {/* Delivery date */}
+                                <div className={`flex items-center gap-1 px-2 py-0.5 rounded ${
+                                  dateStatus === 'late' ? 'bg-red-500/15 text-red-300' :
+                                  dateStatus === 'ahead' ? 'bg-blue-500/15 text-blue-300' :
+                                  'bg-blue-500/10 text-blue-400'
+                                }`}>
+                                  <Calendar size={12} />
+                                  <span>{formatDate(stage.deliveryDate)}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Progress bar */}
+                            <div className="space-y-1">
+                              <div className="flex justify-between items-center">
+                                <span className="text-xs text-dark-400 font-medium">Progress</span>
+                                <span className={`text-xs font-semibold ${(stage.progress || 0) === 100 ? 'text-green-400' : 'text-dark-300'}`}>{Math.round(stage.progress || 0)}%</span>
+                              </div>
+                              <div className="w-full h-1.5 bg-dark-700/30 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all duration-300 ${
+                                    (stage.progress || 0) === 100
+                                      ? 'bg-green-500/60'
+                                      : 'bg-red-500/60'
+                                  }`}
+                                  style={{ width: `${stage.progress || 0}%` }}
+                                />
+                              </div>
+                            </div>
+
+                            {/* Expanded Points */}
+                            {stageExpanded && stage.points && stage.points.length > 0 && (
+                              <div className="mt-3 pt-3 border-t border-dark-600/30 space-y-2">
+                                <h5 className="text-xs font-semibold uppercase text-dark-400 tracking-wider">Points</h5>
+                                <div className="space-y-1.5">
+                                  {stage.points.map((point) => (
+                                    <div
+                                      key={point.id}
+                                      className={`flex items-start gap-2 text-xs p-2 rounded transition-colors ${
+                                        point.completed
+                                          ? 'bg-green-500/10 text-green-400'
+                                          : 'bg-dark-700/20 text-dark-300'
+                                      }`}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={point.completed}
+                                        readOnly
+                                        className="mt-0.5 cursor-default accent-red-500"
+                                      />
+                                      <span>{point.name}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           )
         })}

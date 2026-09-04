@@ -34,7 +34,7 @@ router.get('/module/:moduleId', async (req, res) => {
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const stageId = parseInt(req.params.id, 10)
-    const stage = await stagesService.getStageById(stageId)
+    const stage = await stagesService.getStageWithPoints(stageId)
 
     if (!stage) {
       const apiError: ApiError = {
@@ -45,10 +45,8 @@ router.get('/:id', async (req: Request, res: Response) => {
       return res.status(404).json(apiError)
     }
 
-    const progress = await stagesService.getStageProgress(stageId)
-
     const response: ApiResponse<any> = {
-      data: { ...stage, progress },
+      data: stage,
       timestamp: new Date().toISOString(),
     }
     res.json(response)
@@ -148,7 +146,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
     const stageId = parseInt(req.params.id, 10)
     const author = req.body.author || 'api'
 
-    const existing = await stagesService.getStageById(stageId)
+    const existing = await stagesService.getStage(stageId)
     if (!existing) {
       const apiError: ApiError = {
         error: 'STAGE_NOT_FOUND',

@@ -99,6 +99,7 @@ export async function updateModule(
     orderIndex?: number
     icon?: string
     priority?: string
+    projectId?: number
   }
 ) {
   const updateData: any = {}
@@ -108,6 +109,7 @@ export async function updateModule(
   if (data.orderIndex !== undefined) updateData.orderIndex = data.orderIndex
   if (data.icon !== undefined) updateData.icon = data.icon
   if (data.priority !== undefined) updateData.priority = data.priority
+  if (data.projectId !== undefined) updateData.projectId = data.projectId
 
   const [updated] = await db
     .update(modules)

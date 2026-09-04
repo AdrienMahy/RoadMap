@@ -138,7 +138,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
     const projectId = parseInt(req.params.id, 10)
     const author = req.body.author || 'api'
 
-    const existing = await projectsService.getProjectById(projectId)
+    const existing = await projectsService.getProject(projectId)
     if (!existing) {
       const apiError: ApiError = {
         error: 'PROJECT_NOT_FOUND',

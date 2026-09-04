@@ -97,6 +97,7 @@ export async function updateStage(
     orderIndex?: number
     icon?: string
     priority?: string
+    moduleId?: number
   }
 ) {
   const existing = await getStage(id)
@@ -111,6 +112,7 @@ export async function updateStage(
   if (data.orderIndex !== undefined) updateData.orderIndex = data.orderIndex
   if (data.icon !== undefined) updateData.icon = data.icon
   if (data.priority !== undefined) updateData.priority = data.priority
+  if (data.moduleId !== undefined) updateData.moduleId = data.moduleId
 
   const [updated] = await db
     .update(stages)

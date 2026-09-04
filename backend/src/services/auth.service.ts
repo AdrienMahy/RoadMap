@@ -5,7 +5,7 @@ import { createHash, randomBytes, pbkdf2Sync } from 'crypto'
 import jwt from 'jsonwebtoken'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'roadmap-secret-key-2026'
-const JWT_EXPIRATION = '30m' // 30 minutes
+const JWT_EXPIRATION = '7d' // 7 days
 
 export interface RegisterPayload {
   username: string
@@ -215,6 +215,40 @@ export class AuthService {
       .set({ role: newRole })
       .where(eq(users.id, userId))
       .returning({ id: users.id, username: users.username, email: users.email, role: users.role })
+
+    if (updated.length === 0) {
+      throw new Error('User not found')
+    }
+
+    return updated[0]
+  }
+
+  async updateUserProfile(userId: number, data: { firstName?: string; lastName?: string; email?: string; password?: string; role?: string }) {
+    const updateData: any = {}
+    
+    if (data.firstName !== undefined) updateData.firstName = data.firstName
+    if (data.lastName !== undefined) updateData.lastName = data.lastName
+    if (data.email !== undefined) updateData.email = data.email
+    if (data.password !== undefined) updateData.passwordHash = hashPassword(data.password)
+    if (data.role !== undefined) {
+      if (!['Administrateur', 'Board'].includes(data.role)) {
+        throw new Error('Invalid role. Must be either "Administrateur" or "Board"')
+      }
+      updateData.role = data.role
+    }
+
+    const updated = await db
+      .update(users)
+      .set(updateData)
+      .where(eq(users.id, userId))
+      .returning({ 
+        id: users.id, 
+        username: users.username, 
+        email: users.email, 
+        firstName: users.firstName,
+        lastName: users.lastName,
+        role: users.role 
+      })
 
     if (updated.length === 0) {
       throw new Error('User not found')

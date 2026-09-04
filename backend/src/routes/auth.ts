@@ -104,6 +104,26 @@ router.put('/users/:id/role', async (req, res) => {
   }
 })
 
+// PUT /api/auth/users/:id - Update user profile (admin only)
+router.put('/users/:id', async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id)
+    const { firstName, lastName, email, password, role } = req.body
+
+    const updatedUser = await authService.updateUserProfile(userId, {
+      firstName,
+      lastName,
+      email,
+      password,
+      role,
+    })
+    res.json(updatedUser)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to update user profile'
+    res.status(400).json({ error: message })
+  }
+})
+
 // DELETE /api/auth/users/:id - Delete user (admin only)
 router.delete('/users/:id', async (req, res) => {
   try {

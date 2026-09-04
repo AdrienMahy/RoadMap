@@ -45,7 +45,7 @@ function AppContent() {
           <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
             <h1 className="text-2xl font-bold">Roadmap Admin</h1>
             <div className="flex items-center gap-3">
-              <span className="text-sm text-dark-400">Logged in as {user.username}</span>
+              <span className="text-sm text-dark-400">Logged in as {user.firstName || user.username}</span>
               <NotificationBell />
               <Button variant="secondary" size="sm" onClick={() => setIsDev(false)}>
                 Back to Board
@@ -76,7 +76,7 @@ function AppContent() {
               <h1 className="text-2xl font-bold">Data & IT Roadmap</h1>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-sm text-dark-400">Hello, {user.username}</span>
+              <span className="text-sm text-dark-400">Hello, {user.firstName || user.username}</span>
               <NotificationBell />
               {isAdmin && (
                 <Button
