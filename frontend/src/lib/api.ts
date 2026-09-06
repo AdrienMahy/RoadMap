@@ -99,6 +99,11 @@ export async function fetchPoints(stageId: number) {
   return data.data
 }
 
+export async function fetchPoint(id: number) {
+  const { data } = await api.get(`/points/${id}`)
+  return data.data
+}
+
 export async function createPoint(point: any) {
   const { data } = await api.post('/points', point)
   return data.data

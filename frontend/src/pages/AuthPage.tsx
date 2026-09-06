@@ -36,8 +36,18 @@ export default function AuthPage() {
     <div className="min-h-screen bg-dark-950 text-dark-50 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="bg-dark-900 border border-dark-800 rounded-lg p-8">
-          <h1 className="text-2xl font-bold mb-2">Data & IT Roadmap</h1>
-          <p className="text-dark-400 mb-8">{isLogin ? 'Sign in to comment' : 'Create your account'}</p>
+          {/* Logo */}
+          <div className="flex justify-center mb-6">
+            <img
+              src="/logo.png"
+              alt="Logo"
+              className="h-16 flex-shrink-0"
+              style={{ aspectRatio: '624/1056' }}
+            />
+          </div>
+          
+          <h1 className="text-2xl font-bold mb-2 text-center">Data & IT Roadmap</h1>
+          <p className="text-dark-400 mb-8 text-center">{isLogin ? 'Sign in to comment' : 'Create your account'}</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -105,22 +115,6 @@ export default function AuthPage() {
               {isLoading ? 'Loading...' : isLogin ? 'Sign In' : 'Sign Up'}
             </Button>
           </form>
-
-          <div className="mt-6 pt-6 border-t border-dark-800">
-            <p className="text-sm text-dark-400 text-center mb-4">
-              {isLogin ? "Don't have an account?" : 'Already have an account?'}
-            </p>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setIsLogin(!isLogin)
-                setError('')
-              }}
-              className="w-full"
-            >
-              {isLogin ? 'Create Account' : 'Sign In'}
-            </Button>
-          </div>
         </div>
       </div>
     </div>

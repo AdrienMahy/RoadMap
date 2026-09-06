@@ -5,13 +5,13 @@ import { Textarea } from './Textarea'
 import { Button } from './Button'
 import { PrioritySelector } from './PrioritySelector'
 import { IconPicker } from './IconPicker'
-import { fetchProject, fetchModule, fetchStage, deleteProject, deleteModule, deleteStage, fetchProjects } from '../lib/api'
+import { fetchProject, fetchModule, fetchStage, fetchPoint, deleteProject, deleteModule, deleteStage, deletePoint, fetchProjects } from '../lib/api'
 
 interface EditOffCanvasProps {
   isOpen: boolean
   onClose: () => void
   item: {
-    type: 'project' | 'module' | 'stage'
+    type: 'project' | 'module' | 'stage' | 'point'
     id: number
   } | null
   onSave: (data: any) => void
@@ -85,6 +85,8 @@ export function EditOffCanvas({
         data = await fetchModule(item.id)
       } else if (item.type === 'stage') {
         data = await fetchStage(item.id)
+      } else if (item.type === 'point') {
+        data = await fetchPoint(item.id)
       }
       console.log(`[DEBUG] Loaded ${item.type}:`, data)
       setItemData(data)
@@ -110,6 +112,8 @@ export function EditOffCanvas({
         await deleteModule(item.id)
       } else if (item.type === 'stage') {
         await deleteStage(item.id)
+      } else if (item.type === 'point') {
+        await deletePoint(item.id)
       }
       onClose()
       if (onDelete) {
@@ -176,6 +180,13 @@ export function EditOffCanvas({
               onDelete={handleDelete}
               isSaving={isSaving}
               allModules={allModules}
+            />
+          ) : item.type === 'point' && itemData ? (
+            <PointEditForm
+              data={itemData}
+              onSave={onSave}
+              onDelete={handleDelete}
+              isSaving={isSaving}
             />
           ) : null}
         </div>
@@ -492,6 +503,92 @@ function StageEditForm({
         >
           {formData.status === 'stopped' ? '🛑 Stopped' : '⏸ Stop'}
         </Button>
+      </div>
+    </form>
+  )
+}
+
+function PointEditForm({
+  data,
+  onSave,
+  onDelete,
+  isSaving,
+}: {
+  data: any
+  onSave: (data: any) => void
+  onDelete?: () => void
+  isSaving?: boolean
+}) {
+  const [formData, setFormData] = useState(data)
+
+  useEffect(() => {
+    setFormData(data)
+  }, [data])
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault()
+        onSave(formData)
+      }}
+      className="space-y-4"
+    >
+      <div>
+        <label className="block text-sm font-medium text-dark-300 mb-2">Point Name</label>
+        <Input
+          value={formData.name || ''}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          placeholder="Enter point name"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-dark-300 mb-2">Description</label>
+        <Textarea
+          value={formData.description || ''}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          placeholder="Enter point description"
+          className="h-24"
+        />
+      </div>
+
+      <PrioritySelector
+        value={formData.priority || 'medium'}
+        onChange={(priority) => setFormData({ ...formData, priority })}
+        label="Priority"
+      />
+
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          id="completed"
+          checked={formData.completed || false}
+          onChange={(e) => setFormData({ ...formData, completed: e.target.checked })}
+          className="cursor-pointer accent-blue-500"
+        />
+        <label htmlFor="completed" className="text-sm font-medium text-dark-300 cursor-pointer">
+          Mark as completed
+        </label>
+      </div>
+
+      <div className="flex flex-col gap-2 pt-4">
+        <Button
+          type="submit"
+          disabled={isSaving}
+          className="w-full bg-red-600 hover:bg-red-700"
+        >
+          Save Point
+        </Button>
+        {onDelete && (
+          <Button
+            type="button"
+            onClick={onDelete}
+            disabled={isSaving}
+            className="w-full bg-red-900 hover:bg-red-950 border border-red-700"
+          >
+            <Trash2 size={16} className="mr-1" /> Delete Point
+          </Button>
+        )}
       </div>
     </form>
   )

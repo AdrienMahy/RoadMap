@@ -26,7 +26,7 @@ import { IconPicker } from '../components/IconPicker'
 import { PrioritySelector } from '../components/PrioritySelector'
 import { EditOffCanvas } from '../components/EditOffCanvas'
 import { UsersManagement } from '../components/UsersManagement'
-import { ChevronDown, ChevronRight, Trash2, Save, CheckCircle, Clock, Zap, AlertCircle, AlertTriangle, AlertOctagon, Minus, BarChart3, Users, ShieldAlert, Info } from 'lucide-react'
+import { ChevronDown, ChevronRight, Trash2, Save, CheckCircle, Clock, Zap, AlertCircle, AlertTriangle, AlertOctagon, Minus, BarChart3, Users, ShieldAlert, Info, Edit2 } from 'lucide-react'
 import { getStatusColor, calculateStatus, getPriorityColor, getStatusBorderColor, getPriorityIcon, getStatusIconName, getPriorityIconName, getStatusIconColor, getPriorityIconColor, getPriorityLabel } from '../lib/status'
 import { getIconByName } from '../lib/icons'
 
@@ -142,7 +142,7 @@ function EditPanel({
       } else if (item.type === 'stage') {
         await updateStage(item.id, formData)
       } else if (item.type === 'point') {
-        await updatePoint(item.id, { completed: formData.completed })
+        await updatePoint(item.id, { name: formData.name, completed: formData.completed, priority: formData.priority })
       }
       onUpdate()
     } catch (error) {
@@ -512,6 +512,8 @@ export default function DevPage() {
         await updateModule(selectedItem.id, data)
       } else if (selectedItem.type === 'stage') {
         await updateStage(selectedItem.id, data)
+      } else if (selectedItem.type === 'point') {
+        await updatePoint(selectedItem.id, { name: data.name, completed: data.completed, priority: data.priority, description: data.description })
       }
       
       // Reload project to reflect changes
@@ -765,7 +767,7 @@ export default function DevPage() {
             item={
               selectedItem
                 ? {
-                    type: selectedItem.type as 'project' | 'module' | 'stage',
+                    type: selectedItem.type as 'project' | 'module' | 'stage' | 'point',
                     id: selectedItem.id,
                   }
                 : null
@@ -1043,6 +1045,8 @@ function StageItemTree({
               selectedItem={selectedItem}
               onMoveItem={onMoveItem}
               parentId={stage.id}
+              projectId={projectId}
+              onRefresh={onRefresh}
               onTogglePoint={(pointId: number, completed: boolean) => {
                 console.log('[DEBUG] Toggling point', pointId, 'to completed:', completed)
                 updatePoint(pointId, { completed })
@@ -1052,6 +1056,17 @@ function StageItemTree({
                   })
                   .catch((error) => {
                     console.error('[DEBUG] Error updating point:', error)
+                  })
+              }}
+              onDeletePoint={(pointId: number) => {
+                console.log('[DEBUG] Deleting point', pointId)
+                deletePoint(pointId)
+                  .then(() => {
+                    console.log('[DEBUG] Point deleted')
+                    onRefresh(projectId)
+                  })
+                  .catch((error) => {
+                    console.error('[DEBUG] Error deleting point:', error)
                   })
               }}
             />
@@ -1106,6 +1121,9 @@ function PointItemTree({
   onMoveItem,
   parentId,
   onTogglePoint,
+  onDeletePoint,
+  projectId,
+  onRefresh,
 }: {
   point: Point
   pointIdx: number
@@ -1115,10 +1133,40 @@ function PointItemTree({
   onMoveItem: (type: 'point' | 'stage', itemId: number, parentId: number, direction: 'up' | 'down') => void
   parentId: number
   onTogglePoint?: (pointId: number, completed: boolean) => void
+  onDeletePoint?: (pointId: number) => void
+  projectId?: number
+  onRefresh?: (projectId: number) => void
 }) {
+  const [isEditing, setIsEditing] = useState(false)
+  const [editName, setEditName] = useState(point.name)
+  const [isSaving, setIsSaving] = useState(false)
+
   const isSelected = selectedItem?.type === 'point' && selectedItem?.id === point.id
   const completedDate = point.completedAt ? new Date(point.completedAt) : null
   const formattedDate = completedDate ? completedDate.toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' }) : null
+
+  async function handleSaveInline() {
+    if (!editName.trim()) {
+      setIsEditing(false)
+      setEditName(point.name)
+      return
+    }
+    
+    setIsSaving(true)
+    try {
+      await updatePoint(point.id, { name: editName })
+      setIsEditing(false)
+      // Refresh project to update the list without opening offcanvas
+      if (onRefresh && projectId) {
+        onRefresh(projectId)
+      }
+    } catch (error) {
+      console.error('Failed to save point:', error)
+      setEditName(point.name)
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   return (
     <div
@@ -1163,18 +1211,68 @@ function PointItemTree({
           </button>
         </div>
         
-        <span 
-          className={`flex-1 text-xs ${point.completed ? 'line-through text-dark-400' : 'text-white'}`}
-        >
-          {point.name}
-        </span>
+        {/* Inline edit or display */}
+        {isEditing ? (
+          <input
+            autoFocus
+            type="text"
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') handleSaveInline()
+              if (e.key === 'Escape') {
+                setIsEditing(false)
+                setEditName(point.name)
+              }
+            }}
+            onBlur={handleSaveInline}
+            className="flex-1 px-2 py-0.5 bg-dark-700 border border-blue-500 rounded text-xs text-white focus:outline-none"
+            disabled={isSaving}
+          />
+        ) : (
+          <span 
+            className={`flex-1 text-xs ${point.completed ? 'line-through text-dark-400' : 'text-white'}`}
+          >
+            {point.name}
+          </span>
+        )}
 
         {/* Validation date */}
-        {point.completed && formattedDate && (
+        {point.completed && formattedDate && !isEditing && (
           <span className="text-green-400 text-xs whitespace-nowrap">
             ✓ {formattedDate}
           </span>
         )}
+
+        {/* Edit/Delete buttons */}
+        <div className="flex items-center gap-1">
+          {!isEditing && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                setIsEditing(true)
+              }}
+              className="p-0.5 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded transition"
+              title="Edit point"
+            >
+              <Edit2 size={14} />
+            </button>
+          )}
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              if (confirm(`Delete point "${point.name}"?`)) {
+                if (onDeletePoint) {
+                  onDeletePoint(point.id)
+                }
+              }
+            }}
+            className="p-0.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded transition"
+            title="Delete point"
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
       </div>
     </div>
   )
