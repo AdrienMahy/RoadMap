@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Lock, LogOut } from 'lucide-react'
 import { Button } from './components/Button'
 import { Input } from './components/Input'
@@ -8,12 +8,26 @@ import { NotificationsProvider } from './contexts/NotificationsContext'
 import BoardPage from './pages/BoardPage'
 import DevPage from './pages/DevPage'
 import AuthPage from './pages/AuthPage'
+import ActivationPage from './pages/ActivationPage'
 
 function AppContent() {
   const { user, logout, isAdmin } = useAuth()
   const [isDev, setIsDev] = useState(false)
   const [accessCode, setAccessCode] = useState('')
   const [error, setError] = useState('')
+  const [isActivationPage, setIsActivationPage] = useState(false)
+
+  // Check if this is the activation page
+  useEffect(() => {
+    const path = window.location.pathname
+    const search = window.location.search
+    setIsActivationPage(path === '/activate' || path.includes('activate'))
+  }, [])
+
+  // Show activation page if accessing /activate route
+  if (isActivationPage) {
+    return <ActivationPage />
+  }
 
   const handleAccessDev = (code: string) => {
     // Only allow dev access if user is admin

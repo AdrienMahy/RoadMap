@@ -3,7 +3,7 @@ import { Trash2, Save, UserPlus, AlertCircle, Edit2, X } from 'lucide-react'
 import { Button } from './Button'
 import { Input } from './Input'
 import { Card } from './Card'
-import { api, fetchAllUsers, updateUserRole, deleteUser, updateUserProfile } from '../lib/api'
+import { api, fetchAllUsers, updateUserRole, deleteUser, updateUserProfile, regenerateActivationToken } from '../lib/api'
 
 interface User {
   id: number
@@ -31,7 +31,9 @@ export function UsersManagement() {
   // Modal edit state
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
-  const [editForm, setEditForm] = useState({ firstName: '', lastName: '', email: '', password: '', role: 'Board' })
+  const [editForm, setEditForm] = useState({ firstName: '', lastName: '', email: '', role: 'Board' })
+  const [activationLink, setActivationLink] = useState<string | null>(null)
+  const [regeneratingToken, setRegeneratingToken] = useState(false)
 
   // Load all users
   useEffect(() => {
@@ -119,10 +121,26 @@ export function UsersManagement() {
       firstName: user.firstName || '',
       lastName: user.lastName || '',
       email: user.email || '',
-      password: '',
       role: user.role,
     })
     setEditModalOpen(true)
+  }
+
+  async function handleRegenerateActivationToken() {
+    if (!editingUser) return
+
+    try {
+      setError('')
+      setRegeneratingToken(true)
+      const result = await regenerateActivationToken(editingUser.id)
+      setActivationLink(result.activationLink)
+      setSuccess('Activation link regenerated successfully')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to regenerate activation token'
+      setError(message)
+    } finally {
+      setRegeneratingToken(false)
+    }
   }
 
   async function handleSaveEditUser() {
@@ -136,14 +154,12 @@ export function UsersManagement() {
         email: editForm.email,
         role: editForm.role,
       }
-      if (editForm.password) {
-        updates.password = editForm.password
-      }
 
       await updateUserProfile(editingUser.id, updates)
       setSuccess('User updated successfully')
       setEditModalOpen(false)
       setEditingUser(null)
+      setActivationLink(null)
       await loadUsers()
       setTimeout(() => setSuccess(''), 3000)
     } catch (err) {
@@ -402,14 +418,6 @@ export function UsersManagement() {
                 placeholder="Email address"
               />
 
-              <Input
-                label="Password (leave empty to keep current)"
-                type="password"
-                value={editForm.password}
-                onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
-                placeholder="Enter new password"
-              />
-
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-dark-300">Role</label>
                 <select
@@ -422,6 +430,26 @@ export function UsersManagement() {
                 </select>
               </div>
 
+              {/* Activation Link Section */}
+              <div className="bg-blue-950/30 border border-blue-900/50 rounded-lg p-3 space-y-2">
+                <Button
+                  onClick={handleRegenerateActivationToken}
+                  disabled={regeneratingToken}
+                  variant="secondary"
+                  className="w-full"
+                >
+                  {regeneratingToken ? 'Generating...' : 'Regenerate Activation Link'}
+                </Button>
+                {activationLink && (
+                  <div className="bg-dark-800 p-2 rounded border border-blue-900/30">
+                    <p className="text-xs text-dark-400 mb-1">Activation Link:</p>
+                    <p className="text-xs text-blue-300 break-all font-mono select-all cursor-text">
+                      {activationLink}
+                    </p>
+                  </div>
+                )}
+              </div>
+
               {/* Modal Buttons */}
               <div className="flex gap-2 pt-4">
                 <Button
@@ -431,7 +459,10 @@ export function UsersManagement() {
                   <Save size={16} className="mr-1" /> Save Changes
                 </Button>
                 <Button
-                  onClick={() => setEditModalOpen(false)}
+                  onClick={() => {
+                    setEditModalOpen(false)
+                    setActivationLink(null)
+                  }}
                   variant="secondary"
                   className="flex-1"
                 >

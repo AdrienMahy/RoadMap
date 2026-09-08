@@ -139,3 +139,13 @@ export async function deleteUser(userId: number) {
   return data
 }
 
+export async function regenerateActivationToken(userId: number) {
+  const { data } = await api.post(`/auth/users/${userId}/regenerate-activation`)
+  return data
+}
+
+export async function getActivationInfo(token: string) {
+  const { data } = await api.get(`/auth/activation-info?token=${token}`)
+  return data
+}
+

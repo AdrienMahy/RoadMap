@@ -10,6 +10,7 @@ export const users = pgTable('users', {
   firstName: varchar('first_name', { length: 255 }),
   lastName: varchar('last_name', { length: 255 }),
   role: varchar('role', { length: 50 }).notNull().default('Board'), // 'Administrateur' or 'Board'
+  isActivated: boolean('is_activated').notNull().default(false), // Account activation status
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
@@ -101,6 +102,15 @@ export const updateHistory = pgTable('update_history', {
   oldValue: text('old_value'),
   newValue: text('new_value'),
   changedBy: varchar('changed_by', { length: 255 }).notNull().default('system'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+})
+
+// ACTIVATION TOKENS TABLE - For email-based account activation
+export const activationTokens = pgTable('activation_tokens', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull(),
+  token: varchar('token', { length: 255 }).notNull().unique(),
+  expiresAt: timestamp('expires_at').notNull(), // Token expiration (typically 24-48 hours)
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
