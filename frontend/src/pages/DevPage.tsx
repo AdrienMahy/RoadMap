@@ -766,7 +766,6 @@ export default function DevPage() {
 
           {/* OffCanvas - Edit Form */}
           <EditOffCanvas
-            key={selectedItem ? `${selectedItem.type}-${selectedItem.id}` : 'empty'}
             isOpen={offCanvasOpen}
             onClose={() => setOffCanvasOpen(false)}
             item={

@@ -20,6 +20,7 @@ export function IconPicker({ value, onChange, label = 'Icon' }: IconPickerProps)
       </label>
       <div className="relative">
         <button
+          type="button"
           onClick={() => setIsOpen(!isOpen)}
           className="flex items-center justify-between w-full px-3 py-2 text-sm border border-dark-600 rounded bg-dark-700 hover:bg-dark-600 transition text-dark-100 text-left"
         >
@@ -31,9 +32,12 @@ export function IconPicker({ value, onChange, label = 'Icon' }: IconPickerProps)
         </button>
 
         {isOpen && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-dark-700 border border-dark-600 rounded shadow-lg z-50 max-h-48 overflow-y-auto">
+          <div 
+            className="absolute top-full left-0 right-0 mt-1 bg-dark-700 border border-dark-600 rounded shadow-lg z-50 max-h-48 overflow-y-auto"
+          >
             {AVAILABLE_ICONS.map((item) => (
               <button
+                type="button"
                 key={item.name}
                 onClick={() => {
                   onChange(item.name)

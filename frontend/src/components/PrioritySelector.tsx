@@ -30,6 +30,7 @@ export function PrioritySelector({
       </label>
       <div className="relative">
         <button
+          type="button"
           onClick={() => setIsOpen(!isOpen)}
           className="flex items-center justify-between w-full px-3 py-2 text-sm border border-dark-600 rounded bg-dark-700 hover:bg-dark-600 transition text-dark-100 text-left"
         >
@@ -41,11 +42,14 @@ export function PrioritySelector({
         </button>
 
         {isOpen && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-dark-700 border border-dark-600 rounded shadow-lg z-50">
+          <div 
+            className="absolute top-full left-0 right-0 mt-1 bg-dark-700 border border-dark-600 rounded shadow-lg z-50"
+          >
             {PRIORITY_OPTIONS.map((option) => {
               const IconComponent = option.icon
               return (
                 <button
+                  type="button"
                   key={option.value}
                   onClick={() => {
                     onChange(option.value)

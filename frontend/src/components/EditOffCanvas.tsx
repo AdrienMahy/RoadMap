@@ -35,19 +35,6 @@ export function EditOffCanvas({
   const [allProjects, setAllProjects] = useState<any[]>([])
   const [allModules, setAllModules] = useState<any[]>([])
 
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        onClose()
-      }
-    }
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-      return () => document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [isOpen, onClose])
-
   // Load item data when item or isOpen changes
   useEffect(() => {
     if (isOpen && item) {
@@ -129,8 +116,8 @@ export function EditOffCanvas({
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black/50 transition-opacity z-40 ${
-          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        className={`fixed inset-0 bg-black/50 transition-opacity z-40 pointer-events-none ${
+          isOpen ? 'opacity-100' : 'opacity-0'
         }`}
       />
 
