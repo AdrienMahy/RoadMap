@@ -49,7 +49,7 @@ router.get('/:id', async (req, res) => {
 // POST /api/modules - Create module
 router.post('/', async (req, res) => {
   try {
-    const { projectId, name, description, status } = req.body
+    const { projectId, name, description, status, priority, icon } = req.body
 
     if (!projectId || !name) {
       return res.status(400).json({
@@ -58,20 +58,35 @@ router.post('/', async (req, res) => {
       })
     }
 
+    console.log('[POST /api/modules] Creating module:', {
+      projectId,
+      name,
+      description,
+      status,
+      priority,
+      icon,
+    })
+
     const module = await modulesService.createModule(projectId, {
       name,
       description,
       status,
+      priority,
+      icon,
     })
+
+    console.log('[POST /api/modules] Module created successfully:', module)
 
     res.status(201).json({
       success: true,
       data: module,
     })
   } catch (error: any) {
+    console.error('[POST /api/modules] Error creating module:', error)
+    console.error('[POST /api/modules] Error stack:', error.stack)
     res.status(500).json({
       success: false,
-      error: error.message,
+      error: error.message || error,
     })
   }
 })
