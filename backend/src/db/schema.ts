@@ -51,6 +51,8 @@ export const stages = pgTable('stages', {
   validatedAt: timestamp('validated_at'),
   orderIndex: integer('order_index').notNull().default(0),
   status: varchar('status', { length: 50 }).notNull().default('pending'),
+  priority: varchar('priority', { length: 50 }).default('medium'),
+  icon: varchar('icon', { length: 50 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
@@ -63,6 +65,7 @@ export const points = pgTable('points', {
   description: text('description'),
   completed: boolean('completed').notNull().default(false),
   completedAt: timestamp('completed_at'),
+  priority: varchar('priority', { length: 50 }).default('medium'),
   orderIndex: integer('order_index').notNull().default(0),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
