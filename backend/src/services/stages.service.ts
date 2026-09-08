@@ -52,6 +52,7 @@ export async function getStageWithPoints(id: number) {
 // Create stage
 export async function createStage(
   moduleId: number,
+  projectId: number,
   data: {
     name: string
     description?: string
@@ -65,6 +66,7 @@ export async function createStage(
     .insert(stages)
     .values({
       moduleId,
+      projectId,
       name: data.name,
       description: data.description || '',
       deliveryDate: data.deliveryDate ? new Date(data.deliveryDate) : null,

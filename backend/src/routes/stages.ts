@@ -66,18 +66,20 @@ router.get('/:id', async (req: Request, res: Response) => {
  */
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const { moduleId, name, description, deliveryDate, status, icon, priority } = req.body
+    const { moduleId, projectId, name, description, deliveryDate, status, icon, priority } = req.body
 
-    if (!moduleId || !name) {
+    if (!moduleId || !projectId || !name) {
       const apiError: ApiError = {
         error: 'VALIDATION_ERROR',
-        message: 'moduleId and name are required',
+        message: 'moduleId, projectId and name are required',
         timestamp: new Date().toISOString(),
       }
       return res.status(400).json(apiError)
     }
 
-    const data = await stagesService.createStage(moduleId, {
+    console.log('[POST /api/stages] Creating stage:', {
+      moduleId,
+      projectId,
       name,
       description,
       deliveryDate,
@@ -85,6 +87,18 @@ router.post('/', async (req: Request, res: Response) => {
       icon,
       priority,
     })
+
+    const data = await stagesService.createStage(moduleId, projectId, {
+      name,
+      description,
+      deliveryDate,
+      status,
+      icon,
+      priority,
+    })
+    
+    console.log('[POST /api/stages] Stage created successfully:', data)
+    
     const response: ApiResponse<any> = {
       data,
       message: 'Stage created successfully',
@@ -92,6 +106,7 @@ router.post('/', async (req: Request, res: Response) => {
     }
     res.status(201).json(response)
   } catch (error) {
+    console.error('[POST /api/stages] Error creating stage:', error)
     const apiError: ApiError = {
       error: 'CREATE_STAGE_FAILED',
       message: error instanceof Error ? error.message : 'Failed to create stage',
