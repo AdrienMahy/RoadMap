@@ -161,7 +161,7 @@ export function EditOffCanvas({
               data={itemData}
               onSave={onSave}
               onDelete={handleDelete}
-              onAddModule={onAddChild ? () => onAddChild(item.id, 'module', 'New Module') : undefined}
+              onAddModule={onAddChild ? (name: string) => onAddChild(item.id, 'module', name) : undefined}
               isSaving={isSaving}
             />
           ) : item.type === 'module' && itemData ? (
@@ -205,7 +205,7 @@ function ProjectEditForm({
   data: any
   onSave: (data: any) => void
   onDelete?: () => void
-  onAddModule?: () => void
+  onAddModule?: (name: string) => void
   isSaving?: boolean
 }) {
   const [formData, setFormData] = useState(data)
@@ -264,7 +264,12 @@ function ProjectEditForm({
         {onAddModule && (
           <Button
             type="button"
-            onClick={onAddModule}
+            onClick={() => {
+              const name = prompt('Enter module name:')
+              if (name) {
+                onAddModule(name)
+              }
+            }}
             variant="secondary"
             className="w-full"
           >

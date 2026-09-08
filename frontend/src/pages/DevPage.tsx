@@ -531,16 +531,20 @@ export default function DevPage() {
   }
 
   async function handleAddChild(parentId: number, childType: string, childName: string) {
-    if (!expandedProject || !selectedItem) return
+    if (!expandedProject) return
     setSavingOffCanvas(true)
     try {
+      console.log('[DEBUG] Adding child:', { parentId, childType, childName, expandedProject })
       if (childType === 'module') {
-        await createModule({
+        const moduleData = {
           projectId: parentId,
           name: childName,
           description: '',
+          status: 'planned',
           priority: 'medium',
-        })
+        }
+        console.log('[DEBUG] Creating module with:', moduleData)
+        await createModule(moduleData)
       } else if (childType === 'stage') {
         // Get module to find correct module ID
         const item = findItemInProjects(parentId)
@@ -554,6 +558,7 @@ export default function DevPage() {
           })
         }
       }
+      console.log('[DEBUG] Child created, reloading project', expandedProject)
       await reloadProject(expandedProject)
       setOffCanvasOpen(false)
     } catch (error) {
