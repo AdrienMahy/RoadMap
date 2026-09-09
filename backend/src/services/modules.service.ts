@@ -74,6 +74,12 @@ export async function createModule(
   projectId: number,
   data: { name: string; description?: string; status?: string; icon?: string; priority?: string }
 ) {
+  // Get max orderIndex for this project to append new module at the end
+  const existingModules = await getModulesByProject(projectId)
+  const maxOrderIndex = existingModules.length > 0 
+    ? Math.max(...existingModules.map(m => m.orderIndex ?? 0))
+    : -1
+  
   const [newModule] = await db
     .insert(modules)
     .values({
@@ -83,6 +89,7 @@ export async function createModule(
       status: data.status || 'planned',
       icon: data.icon || null,
       priority: data.priority || 'medium',
+      orderIndex: maxOrderIndex + 1,
     })
     .returning()
 

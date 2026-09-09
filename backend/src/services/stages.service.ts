@@ -62,6 +62,12 @@ export async function createStage(
     priority?: string
   }
 ) {
+  // Get max orderIndex for this module to append new stage at the end
+  const existingStages = await getStagesByModule(moduleId)
+  const maxOrderIndex = existingStages.length > 0 
+    ? Math.max(...existingStages.map(s => s.orderIndex ?? 0))
+    : -1
+  
   const [newStage] = await db
     .insert(stages)
     .values({
@@ -73,6 +79,7 @@ export async function createStage(
       status: data.status || 'pending',
       icon: data.icon || null,
       priority: data.priority || 'medium',
+      orderIndex: maxOrderIndex + 1,
     })
     .returning()
 

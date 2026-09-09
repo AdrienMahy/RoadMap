@@ -24,6 +24,12 @@ export async function createPoint(
   data: { name: string; description?: string },
   author: string = 'system'
 ): Promise<Point> {
+  // Get max orderIndex for this stage to append new point at the end
+  const existingPoints = await getPointsByStage(stageId)
+  const maxOrderIndex = existingPoints.length > 0 
+    ? Math.max(...existingPoints.map(p => p.orderIndex ?? 0))
+    : -1
+  
   const [created] = await db
     .insert(points)
     .values({
@@ -31,7 +37,7 @@ export async function createPoint(
       name: data.name,
       description: data.description,
       completed: false,
-      orderIndex: 0,
+      orderIndex: maxOrderIndex + 1,
     })
     .returning()
 
