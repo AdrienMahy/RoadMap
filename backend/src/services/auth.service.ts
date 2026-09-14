@@ -174,7 +174,8 @@ export class AuthService {
       })
 
     // Generate activation link (frontend URL)
-    const activationLink = `http://localhost:3100/activate?token=${token}`
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3100'
+    const activationLink = `${frontendUrl}/activate?token=${token}`
 
     return {
       user,
@@ -489,7 +490,8 @@ export class AuthService {
       })
 
     // Generate activation link (frontend URL)
-    const activationLink = `http://localhost:3100/activate?token=${token}`
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3100'
+    const activationLink = `${frontendUrl}/activate?token=${token}`
 
     return {
       activationToken: token,
