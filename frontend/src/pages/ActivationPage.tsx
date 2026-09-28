@@ -101,7 +101,7 @@ export default function ActivationPage() {
 
           {/* Header */}
           <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold text-white mb-2">Data & IT Roadmap</h1>
+            <h1 className="text-2xl font-bold text-white mb-2">Data & IT</h1>
             {loadingUserInfo ? (
               <p className="text-dark-400">Loading...</p>
             ) : userInfo ? (

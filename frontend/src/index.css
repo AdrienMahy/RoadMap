@@ -3,5 +3,63 @@
 @tailwind utilities;
 
 body {
-  @apply bg-dark-950 text-dark-100;
+  @apply bg-dark-950 text-dark-100 antialiased;
+  background-image: radial-gradient(circle at 12% 0%, rgba(227, 6, 19, 0.08), transparent 28rem), linear-gradient(180deg, #111111 0%, #090909 100%);
+  background-attachment: fixed;
+  font-family: 'Avenir Next', 'Helvetica Neue', sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.documentation-content {
+  @apply text-dark-200 leading-7;
+}
+
+.documentation-content h1 {
+  @apply mb-6 mt-2 text-3xl font-bold text-white;
+}
+
+.documentation-content h2 {
+  @apply mb-4 mt-8 border-b border-dark-700 pb-2 text-2xl font-semibold text-white;
+}
+
+.documentation-content h3 {
+  @apply mb-3 mt-6 text-xl font-semibold text-white;
+}
+
+.documentation-content p {
+  @apply mb-4;
+}
+
+.documentation-content ul {
+  @apply mb-4 list-disc space-y-1 pl-6;
+}
+
+.documentation-content ol {
+  @apply mb-4 list-decimal space-y-1 pl-6;
+}
+
+.documentation-content a {
+  @apply text-red-400 underline decoration-red-500/40 underline-offset-2 hover:text-red-300;
+}
+
+.documentation-content blockquote {
+  @apply mb-4 border-l-2 border-red-500/60 pl-4 italic text-dark-400;
+}
+
+.documentation-content code {
+  @apply rounded bg-dark-800 px-1.5 py-0.5 text-sm text-red-300;
+}
+
+.documentation-content pre {
+  @apply mb-4 overflow-x-auto rounded-lg border border-dark-700 bg-dark-800 p-4;
+}
+
+.documentation-content pre code {
+  @apply bg-transparent p-0 text-dark-200;
 }

@@ -117,10 +117,69 @@ export const activationTokens = pgTable('activation_tokens', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
+// USER DOCUMENTATION - Markdown files classified by project only
+export const documentationDocuments = pgTable('documentation_documents', {
+  id: serial('id').primaryKey(),
+  projectId: integer('project_id').references(() => projects.id, { onDelete: 'cascade' }),
+  title: varchar('title', { length: 255 }).notNull(),
+  fileName: varchar('file_name', { length: 255 }).notNull(),
+  contentMarkdown: text('content_markdown').notNull(),
+  orderIndex: integer('order_index').notNull().default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+// SPRINTS - temporal collections independent from the roadmap hierarchy
+export const sprints = pgTable('sprints', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  goal: text('goal'),
+  startDate: date('start_date').notNull(),
+  endDate: date('end_date').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+export const sprintItems = pgTable('sprint_items', {
+  id: serial('id').primaryKey(),
+  sprintId: integer('sprint_id').notNull().references(() => sprints.id, { onDelete: 'cascade' }),
+  moduleId: integer('module_id').references(() => modules.id, { onDelete: 'cascade' }),
+  stageId: integer('stage_id').references(() => stages.id, { onDelete: 'cascade' }),
+  orderIndex: integer('order_index').notNull().default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+})
+
 // RELATIONS
 export const projectsRelations = relations(projects, ({ many }) => ({
   modules: many(modules),
   comments: many(comments),
+  documentationDocuments: many(documentationDocuments),
+}))
+
+export const documentationDocumentsRelations = relations(documentationDocuments, ({ one }) => ({
+  project: one(projects, {
+    fields: [documentationDocuments.projectId],
+    references: [projects.id],
+  }),
+}))
+
+export const sprintsRelations = relations(sprints, ({ many }) => ({
+  items: many(sprintItems),
+}))
+
+export const sprintItemsRelations = relations(sprintItems, ({ one }) => ({
+  sprint: one(sprints, {
+    fields: [sprintItems.sprintId],
+    references: [sprints.id],
+  }),
+  module: one(modules, {
+    fields: [sprintItems.moduleId],
+    references: [modules.id],
+  }),
+  stage: one(stages, {
+    fields: [sprintItems.stageId],
+    references: [stages.id],
+  }),
 }))
 
 export const modulesRelations = relations(modules, ({ one, many }) => ({

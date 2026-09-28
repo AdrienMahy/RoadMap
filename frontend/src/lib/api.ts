@@ -43,6 +43,62 @@ export async function deleteProject(id: number) {
   await api.delete(`/projects/${id}`)
 }
 
+// User documentation (Markdown files classified by project)
+export async function fetchDocumentation(projectId?: number | null) {
+  const { data } = await api.get('/documentation', {
+    params: { projectId: projectId ?? undefined },
+  })
+  return data.data
+}
+
+export async function createDocumentation(document: {
+  projectId?: number | null
+  title: string
+  fileName: string
+  contentMarkdown: string
+}) {
+  const { data } = await api.post('/documentation', document)
+  return data.data
+}
+
+export async function deleteDocumentation(id: number) {
+  await api.delete(`/documentation/${id}`)
+}
+
+// Sprints
+export async function fetchSprints() {
+  const { data } = await api.get('/sprints')
+  return data.data
+}
+
+export async function fetchSprint(id: number) {
+  const { data } = await api.get(`/sprints/${id}`)
+  return data.data
+}
+
+export async function createSprint(sprint: { name: string; goal?: string; startDate: string; endDate: string }) {
+  const { data } = await api.post('/sprints', sprint)
+  return data.data
+}
+
+export async function updateSprint(id: number, updates: Partial<{ name: string; goal: string; startDate: string; endDate: string }>) {
+  const { data } = await api.put(`/sprints/${id}`, updates)
+  return data.data
+}
+
+export async function deleteSprint(id: number) {
+  await api.delete(`/sprints/${id}`)
+}
+
+export async function addSprintItem(id: number, item: { moduleId?: number; stageId?: number }) {
+  const { data } = await api.post(`/sprints/${id}/items`, item)
+  return data.data
+}
+
+export async function removeSprintItem(sprintId: number, itemId: number) {
+  await api.delete(`/sprints/${sprintId}/items/${itemId}`)
+}
+
 // Modules
 export async function fetchModulesByProject(projectId: number) {
   const { data } = await api.get(`/modules/project/${projectId}`)

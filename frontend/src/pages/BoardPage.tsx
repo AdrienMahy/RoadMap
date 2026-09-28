@@ -209,16 +209,16 @@ export default function BoardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-dark-900 via-dark-950 to-dark-900">
+      <div className="min-h-[calc(100vh-180px)] bg-gradient-to-br from-dark-900 via-dark-950 to-dark-900">
         <div className="max-w-8xl mx-auto p-6">
-          <div className="text-center text-dark-300">Loading roadmap...</div>
+          <div className="text-center text-dark-300">Chargement de la roadmap...</div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-dark-900 via-dark-950 to-dark-900 overflow-hidden">
+    <div className="min-h-[calc(100vh-180px)] overflow-hidden bg-gradient-to-br from-dark-900 via-dark-950 to-dark-900">
       <div className="max-w-8xl mx-auto p-6 h-screen flex flex-col">
         {selectedProject ? (
           <div className="flex-1 overflow-hidden flex flex-col">
@@ -262,7 +262,7 @@ function ProjectGridView({
   if (projects.length === 0) {
     return (
       <div className="text-center text-dark-400 py-12">
-        <p>No projects yet</p>
+        <p>Aucun projet pour le moment</p>
       </div>
     )
   }
@@ -272,10 +272,10 @@ function ProjectGridView({
       {/* Welcome Message */}
       <div className="bg-gradient-to-r from-red-950/30 to-dark-900 border border-red-900/30 rounded-lg p-6">
         <h2 className="text-2xl font-bold text-white">
-          Welcome, {user?.firstName || user?.username}! 👋
+          Bienvenue, {user?.firstName || user?.username} !
         </h2>
         <p className="text-dark-300 mt-2">
-          Browse your projects and collaborate with your team.
+          Consultez vos projets et collaborez avec votre équipe.
         </p>
       </div>
 
@@ -331,7 +331,7 @@ function ProjectDetailView({
         <button
           onClick={onBack}
           className="p-1.5 rounded hover:bg-dark-600/50 transition text-dark-300 hover:text-white"
-          title="Back to projects"
+          title="Retour aux projets"
         >
           <ArrowLeft size={20} />
         </button>
@@ -346,7 +346,7 @@ function ProjectDetailView({
           onOpenComments={onOpenComments}
         />
       ) : (
-        <div className="text-center text-dark-400">No modules yet</div>
+        <div className="text-center text-dark-400">Aucun module pour le moment</div>
       )}
     </div>
   )
@@ -390,7 +390,7 @@ function TimelineView({
 
   // Helper to format dates
   const formatDate = (dateStr: string | undefined) => {
-    if (!dateStr) return 'TBD'
+    if (!dateStr) return 'À définir'
     try {
       const date = new Date(dateStr)
       const months = ['jan', 'fév', 'mar', 'avr', 'mai', 'jun', 'jul', 'aoû', 'sep', 'oct', 'nov', 'déc']
@@ -466,7 +466,7 @@ function TimelineView({
                     moduleStatus === 'stopped' ? 'bg-red-400' :
                     'bg-yellow-400'
                   }`} />
-                  {moduleStatus === 'completed' ? 'Shipped' : moduleStatus === 'in-progress' ? 'In progress' : moduleStatus === 'stopped' ? 'Stopped' : 'Pending'}
+                  {moduleStatus === 'completed' ? 'Terminé' : moduleStatus === 'in-progress' ? 'En cours' : moduleStatus === 'stopped' ? 'Arrêté' : 'En attente'}
                 </div>
                 {module.progress !== undefined && (
                   <div className="flex items-center gap-2">
@@ -539,7 +539,7 @@ function TimelineView({
                                     onOpenComments('stage', stage.id, stage.name)
                                   }}
                                   className="text-dark-400 hover:text-blue-400 transition p-1 rounded hover:bg-dark-700/50 relative"
-                                  title="Comments"
+                                  title="Commentaires"
                                 >
                                   <MessageCircle size={16} />
                                   {stage.commentCount && stage.commentCount > 0 && (
@@ -569,7 +569,7 @@ function TimelineView({
                                   stageStatus === 'stopped' ? 'bg-red-400' :
                                   'bg-yellow-400'
                                 }`} />
-                                {stageStatus === 'completed' ? 'Shipped' : stageStatus === 'in-progress' ? 'In progress' : stageStatus === 'stopped' ? 'Stopped' : 'Pending'}
+                                {stageStatus === 'completed' ? 'Terminé' : stageStatus === 'in-progress' ? 'En cours' : stageStatus === 'stopped' ? 'Arrêté' : 'En attente'}
                               </div>
 
                               {/* Dates section - aligned right */}
@@ -589,7 +589,7 @@ function TimelineView({
                             {/* Progress bar */}
                             <div className="space-y-1">
                               <div className="flex justify-between items-center">
-                                <span className="text-xs text-dark-400 font-medium">Progress</span>
+                                <span className="text-xs text-dark-400 font-medium">Progression</span>
                                 <span className={`text-xs font-semibold ${(stage.progress || 0) === 100 ? 'text-green-400' : 'text-dark-300'}`}>{Math.round(stage.progress || 0)}%</span>
                               </div>
                               <div className="w-full h-1.5 bg-dark-700/30 rounded-full overflow-hidden">
@@ -749,7 +749,7 @@ function StageItemBoard({
                 'bg-blue-500/10 text-blue-400 border-blue-500/20'
               }`}>
                 <Calendar size={12} />
-                <span>{stage.deliveryDate || 'N/A'}</span>
+                <span>{stage.deliveryDate || 'N/D'}</span>
               </div>
               
               {/* Validation date badge - if validated */}

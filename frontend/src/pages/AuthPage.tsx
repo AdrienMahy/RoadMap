@@ -46,7 +46,7 @@ export default function AuthPage() {
             />
           </div>
           
-          <h1 className="text-2xl font-bold mb-2 text-center">Data & IT Roadmap</h1>
+          <h1 className="text-2xl font-bold mb-2 text-center">Data & IT</h1>
           <p className="text-dark-400 mb-8 text-center">{isLogin ? 'Sign in to comment' : 'Create your account'}</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">

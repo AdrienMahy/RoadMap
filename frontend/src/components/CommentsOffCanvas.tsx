@@ -43,7 +43,7 @@ export function CommentsOffCanvas({
       const data = await CommentsAPI.getComments(targetType, targetId)
       setComments(data)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load comments')
+      setError(err instanceof Error ? err.message : 'Impossible de charger les commentaires')
     }
   }
 
@@ -68,7 +68,7 @@ export function CommentsOffCanvas({
       setNewComment('')
       setError('')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add comment')
+      setError(err instanceof Error ? err.message : 'Impossible d’ajouter le commentaire')
     } finally {
       setIsLoading(false)
     }
@@ -91,7 +91,7 @@ export function CommentsOffCanvas({
       setEditingId(null)
       setEditContent('')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update comment')
+      setError(err instanceof Error ? err.message : 'Impossible de modifier le commentaire')
     } finally {
       setIsLoading(false)
     }
@@ -105,7 +105,7 @@ export function CommentsOffCanvas({
       await CommentsAPI.deleteComment(id, token)
       setComments(comments.filter((c) => c.id !== id))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete comment')
+      setError(err instanceof Error ? err.message : 'Impossible de supprimer le commentaire')
     }
   }
 
@@ -124,7 +124,7 @@ export function CommentsOffCanvas({
         {/* Header */}
         <div className="p-6 border-b border-red-900/30 bg-gradient-to-r from-red-950/40 to-dark-900 flex justify-between items-center">
           <div>
-            <h2 className="text-lg font-bold">Comments</h2>
+            <h2 className="text-lg font-bold">Commentaires</h2>
             {targetName && (
               <p className="text-sm text-dark-400 mt-1">{targetName}</p>
             )}
@@ -141,7 +141,7 @@ export function CommentsOffCanvas({
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {comments.length === 0 ? (
             <div className="text-center text-dark-400 py-8">
-              <p>No comments yet</p>
+              <p>Aucun commentaire pour le moment</p>
             </div>
           ) : (
             comments.map((comment) => (
@@ -193,7 +193,7 @@ export function CommentsOffCanvas({
                     <Textarea
                       value={editContent}
                       onChange={(e) => setEditContent(e.target.value)}
-                      placeholder="Edit comment..."
+                      placeholder="Modifier le commentaire..."
                       rows={2}
                     />
                     <div className="flex gap-2">
@@ -202,14 +202,14 @@ export function CommentsOffCanvas({
                         onClick={() => handleUpdateComment(comment.id)}
                         disabled={isLoading}
                       >
-                        <Check size={14} /> Save
+                        <Check size={14} /> Enregistrer
                       </Button>
                       <Button
                         size="sm"
                         variant="secondary"
                         onClick={() => setEditingId(null)}
                       >
-                        Cancel
+                        Annuler
                       </Button>
                     </div>
                   </div>
@@ -227,14 +227,14 @@ export function CommentsOffCanvas({
 
           {!isAuthenticated ? (
             <p className="text-center text-dark-400 text-sm">
-              Sign in to add comments
+              Connectez-vous pour ajouter un commentaire
             </p>
           ) : (
             <>
               <Textarea
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Add a comment..."
+                placeholder="Ajouter un commentaire..."
                 rows={2}
                 disabled={isLoading}
               />
@@ -243,7 +243,7 @@ export function CommentsOffCanvas({
                 disabled={!newComment.trim() || isLoading}
                 className="w-full"
               >
-                <Send size={14} /> Comment
+                <Send size={14} /> Commenter
               </Button>
             </>
           )}

@@ -26,7 +26,9 @@ import { IconPicker } from '../components/IconPicker'
 import { PrioritySelector } from '../components/PrioritySelector'
 import { EditOffCanvas } from '../components/EditOffCanvas'
 import { UsersManagement } from '../components/UsersManagement'
-import { ChevronDown, ChevronRight, Trash2, Save, CheckCircle, Clock, Zap, AlertCircle, AlertTriangle, AlertOctagon, Minus, BarChart3, Users, ShieldAlert, Info, Edit2 } from 'lucide-react'
+import { SprintManagement } from '../components/SprintManagement'
+import { DocumentationManagement } from '../components/DocumentationManagement'
+import { ChevronDown, ChevronRight, Trash2, Save, CheckCircle, Clock, Timer, Zap, AlertCircle, AlertTriangle, AlertOctagon, Minus, BarChart3, Users, ShieldAlert, Info, Edit2, BookOpen } from 'lucide-react'
 import { getStatusColor, calculateStatus, getPriorityColor, getStatusBorderColor, getPriorityIcon, getStatusIconName, getPriorityIconName, getStatusIconColor, getPriorityIconColor, getPriorityLabel } from '../lib/status'
 import { getIconByName } from '../lib/icons'
 
@@ -343,7 +345,7 @@ export default function DevPage() {
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false)
   const [projectForm, setProjectForm] = useState({ name: '', description: '', status: 'planned' })
   const [selectedItem, setSelectedItem] = useState<{ type: 'project' | 'module' | 'stage' | 'point'; id: number } | null>(null)
-  const [activeTab, setActiveTab] = useState<'projects' | 'users'>('projects')
+  const [activeTab, setActiveTab] = useState<'projects' | 'sprints' | 'documentation' | 'users'>('projects')
   const [offCanvasOpen, setOffCanvasOpen] = useState(false)
   const [savingOffCanvas, setSavingOffCanvas] = useState(false)
 
@@ -610,7 +612,7 @@ export default function DevPage() {
           </div>
           
           {/* Tabs */}
-          <div className="flex gap-2 border-b border-red-900/30">
+          <div className="flex gap-2 overflow-x-auto border-b border-red-900/30">
             <button
               onClick={() => setActiveTab('projects')}
               className={`px-4 py-2 font-medium border-b-2 transition flex items-center gap-2 ${
@@ -621,6 +623,28 @@ export default function DevPage() {
             >
               <BarChart3 size={18} />
               Projects
+            </button>
+            <button
+              onClick={() => setActiveTab('sprints')}
+              className={`px-4 py-2 font-medium border-b-2 transition flex items-center gap-2 ${
+                activeTab === 'sprints'
+                  ? 'text-red-400 border-red-400'
+                  : 'text-dark-400 border-transparent hover:text-dark-300'
+              }`}
+            >
+              <Timer size={18} />
+              Sprints
+            </button>
+            <button
+              onClick={() => setActiveTab('documentation')}
+              className={`px-4 py-2 font-medium border-b-2 transition flex items-center gap-2 ${
+                activeTab === 'documentation'
+                  ? 'text-red-400 border-red-400'
+                  : 'text-dark-400 border-transparent hover:text-dark-300'
+              }`}
+            >
+              <BookOpen size={18} />
+              Documentation
             </button>
             <button
               onClick={() => setActiveTab('users')}
@@ -789,6 +813,14 @@ export default function DevPage() {
           />
         </div>
           </>
+        ) : activeTab === 'sprints' ? (
+          <div className="p-6 h-[calc(100vh-220px)] overflow-auto">
+            <SprintManagement />
+          </div>
+        ) : activeTab === 'documentation' ? (
+          <div className="p-6 h-[calc(100vh-220px)] overflow-auto">
+            <DocumentationManagement />
+          </div>
         ) : (
           <div className="p-6 h-[calc(100vh-220px)] overflow-auto">
             <UsersManagement />

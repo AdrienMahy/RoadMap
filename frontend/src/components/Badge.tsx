@@ -22,7 +22,7 @@ export const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
     return (
       <div
         ref={ref}
-        className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${variants[variant]} ${className || ''}`}
+        className={`inline-flex items-center rounded px-2.5 py-1 text-xs font-semibold uppercase tracking-wide ${variants[variant]} ${className || ''}`}
         {...props}
       />
     )

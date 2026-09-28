@@ -130,13 +130,13 @@ export function getPriorityColor(priority: string): string {
 export function getPriorityLabel(priority: string): string {
   switch (priority) {
     case 'critical':
-      return 'Critical'
+      return 'Critique'
     case 'high':
-      return 'High'
+      return 'Haute'
     case 'medium':
-      return 'Medium'
+      return 'Moyenne'
     case 'low':
     default:
-      return 'Low'
+      return 'Basse'
   }
 }

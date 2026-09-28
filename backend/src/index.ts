@@ -8,6 +8,8 @@ import pointsRouter from '@/routes/points'
 import authRouter from '@/routes/auth'
 import commentsRouter from '@/routes/comments'
 import notificationsRouter from '@/routes/notifications'
+import documentationRouter from '@/routes/documentation'
+import sprintsRouter from '@/routes/sprints'
 import { db, runMigrations } from '@/db'
 
 dotenv.config()
@@ -32,6 +34,8 @@ app.use('/api/points', pointsRouter)
 app.use('/api/auth', authRouter)
 app.use('/api/comments', commentsRouter)
 app.use('/api/notifications', notificationsRouter)
+app.use('/api/documentation', documentationRouter)
+app.use('/api/sprints', sprintsRouter)
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
