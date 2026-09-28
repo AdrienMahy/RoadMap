@@ -1,4 +1,4 @@
-import { and, asc, eq } from 'drizzle-orm'
+import { and, asc, eq, inArray } from 'drizzle-orm'
 import { db } from '@/db'
 import { modules, projects, sprintItems, sprints, stages } from '@/db/schema'
 import { getModuleWithHierarchy } from './modules.service'
@@ -90,34 +90,73 @@ export async function deleteSprint(id: number) {
 }
 
 export async function addSprintItem(sprintId: number, target: SprintItemTarget) {
-  const sprint = await db.select({ id: sprints.id }).from(sprints).where(eq(sprints.id, sprintId)).then((rows) => rows[0])
-  if (!sprint) throw new Error('Sprint not found')
-  if ((target.moduleId ? 1 : 0) + (target.stageId ? 1 : 0) !== 1) throw new Error('Exactly one moduleId or stageId is required')
+  return db.transaction(async (transaction) => {
+    const sprint = await transaction.select({ id: sprints.id }).from(sprints).where(eq(sprints.id, sprintId)).then((rows) => rows[0])
+    if (!sprint) throw new Error('Sprint not found')
+    if ((target.moduleId ? 1 : 0) + (target.stageId ? 1 : 0) !== 1) throw new Error('Exactly one moduleId or stageId is required')
 
-  if (target.moduleId) {
-    const module = await db.select({ id: modules.id }).from(modules).where(eq(modules.id, target.moduleId)).then((rows) => rows[0])
-    if (!module) throw new Error('Module not found')
-  }
-  if (target.stageId) {
-    const stage = await db.select({ id: stages.id }).from(stages).where(eq(stages.id, target.stageId)).then((rows) => rows[0])
+    const current = await transaction.select().from(sprintItems).where(eq(sprintItems.sprintId, sprintId))
+
+    if (target.moduleId) {
+      const module = await transaction.select({ id: modules.id }).from(modules).where(eq(modules.id, target.moduleId)).then((rows) => rows[0])
+      if (!module) throw new Error('Module not found')
+
+      const moduleStages = await transaction.select({ id: stages.id }).from(stages).where(eq(stages.moduleId, target.moduleId))
+      const [item] = await transaction.insert(sprintItems).values({
+        sprintId,
+        moduleId: target.moduleId,
+        stageId: null,
+        orderIndex: current.length,
+      }).onConflictDoNothing().returning()
+
+      if (moduleStages.length > 0) {
+        await transaction.insert(sprintItems).values(moduleStages.map((stage, index) => ({
+          sprintId,
+          moduleId: null,
+          stageId: stage.id,
+          orderIndex: current.length + index + 1,
+        }))).onConflictDoNothing()
+      }
+
+      return item || transaction.select().from(sprintItems).where(and(
+        eq(sprintItems.sprintId, sprintId),
+        eq(sprintItems.moduleId, target.moduleId),
+      )).then((rows) => rows[0])
+    }
+
+    const stage = await transaction.select({ id: stages.id }).from(stages).where(eq(stages.id, target.stageId!)).then((rows) => rows[0])
     if (!stage) throw new Error('Stage not found')
-  }
-
-  const current = await db.select().from(sprintItems).where(eq(sprintItems.sprintId, sprintId))
-  const [item] = await db.insert(sprintItems).values({
-    sprintId,
-    moduleId: target.moduleId || null,
-    stageId: target.stageId || null,
-    orderIndex: current.length,
-  }).returning()
-  return item
+    const [item] = await transaction.insert(sprintItems).values({
+      sprintId,
+      moduleId: null,
+      stageId: target.stageId,
+      orderIndex: current.length,
+    }).onConflictDoNothing().returning()
+    return item || transaction.select().from(sprintItems).where(and(
+      eq(sprintItems.sprintId, sprintId),
+      eq(sprintItems.stageId, target.stageId),
+    )).then((rows) => rows[0])
+  })
 }
 
 export async function removeSprintItem(sprintId: number, itemId: number) {
-  const deleted = await db.delete(sprintItems).where(and(
-    eq(sprintItems.id, itemId),
-    eq(sprintItems.sprintId, sprintId),
-  )).returning({ id: sprintItems.id })
-  if (!deleted[0]) return false
-  return true
+  return db.transaction(async (transaction) => {
+    const item = await transaction.select().from(sprintItems).where(and(
+      eq(sprintItems.id, itemId),
+      eq(sprintItems.sprintId, sprintId),
+    )).then((rows) => rows[0])
+    if (!item) return false
+
+    await transaction.delete(sprintItems).where(eq(sprintItems.id, itemId))
+    if (item.moduleId) {
+      const moduleStages = await transaction.select({ id: stages.id }).from(stages).where(eq(stages.moduleId, item.moduleId))
+      if (moduleStages.length > 0) {
+        await transaction.delete(sprintItems).where(and(
+          eq(sprintItems.sprintId, sprintId),
+          inArray(sprintItems.stageId, moduleStages.map((stage) => stage.id)),
+        ))
+      }
+    }
+    return true
+  })
 }

@@ -70,9 +70,21 @@ export function SprintManagement() {
   useEffect(() => { load() }, [])
 
   async function handleCreate() {
-    if (!form.name.trim() || !form.startDate || !form.endDate) return
+    if (!form.name.trim()) {
+      setError('Le nom du Sprint est obligatoire.')
+      return
+    }
+    if (!form.startDate || !form.endDate) {
+      setError('Les dates de début et de fin sont obligatoires.')
+      return
+    }
+    if (new Date(form.endDate) < new Date(form.startDate)) {
+      setError('La date de fin doit être postérieure ou égale à la date de début.')
+      return
+    }
     try {
       setSaving(true)
+      setError('')
       await createSprint(form)
       setForm({ name: '', goal: '', startDate: '', endDate: '' })
       await load()

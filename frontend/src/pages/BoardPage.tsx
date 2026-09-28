@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { fetchProjects } from '../lib/api'
+import { fetchProjects, fetchSprints } from '../lib/api'
 import { Card } from '../components/Card'
 import { Badge } from '../components/Badge'
 import { CommentsOffCanvas } from '../components/CommentsOffCanvas'
@@ -70,6 +70,7 @@ interface Stage {
   orderIndex: number
   points?: Point[]
   commentCount?: number
+  sprintNames?: string[]
 }
 
 interface Module {
@@ -82,6 +83,7 @@ interface Module {
   status: string
   progress: number
   orderIndex: number
+  sprintNames?: string[]
   stages?: Stage[]
 }
 
@@ -95,8 +97,40 @@ interface Project {
   modules?: Module[]
 }
 
+interface SprintAssignment {
+  name: string
+  items: Array<{ moduleId?: number | null; stageId?: number | null }>
+}
+
+function applySprintAssignments(projects: Project[], sprints: SprintAssignment[]) {
+  const moduleSprints = new Map<number, string[]>()
+  const stageSprints = new Map<number, string[]>()
+
+  sprints.forEach((sprint) => sprint.items.forEach((item) => {
+    const target = item.moduleId ? moduleSprints : item.stageId ? stageSprints : null
+    const targetId = item.moduleId || item.stageId
+    if (!target || !targetId) return
+    const names = target.get(targetId) || []
+    if (!names.includes(sprint.name)) names.push(sprint.name)
+    target.set(targetId, names)
+  }))
+
+  return projects.map((project) => ({
+    ...project,
+    modules: project.modules?.map((module) => ({
+      ...module,
+      sprintNames: moduleSprints.get(module.id) || [],
+      stages: module.stages?.map((stage) => ({
+        ...stage,
+        sprintNames: stageSprints.get(stage.id) || [],
+      })),
+    })),
+  }))
+}
+
 export default function BoardPage() {
   const [projects, setProjects] = useState<Project[]>([])
+  const [sprints, setSprints] = useState<SprintAssignment[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
@@ -164,7 +198,12 @@ export default function BoardPage() {
   async function loadProjects() {
     try {
       setLoading(true)
-      const data = await fetchProjects()
+      const [projectData, sprintData] = await Promise.all([
+        fetchProjects(),
+        fetchSprints().catch(() => []),
+      ])
+      const data = applySprintAssignments(projectData, sprintData)
+      setSprints(sprintData)
       setProjects(data)
       // Expand all by default for Board view
       const keys = new Set<string>()
@@ -190,7 +229,7 @@ export default function BoardPage() {
       // Load full project with hierarchy
       const response = await fetch(`/api/projects/${project.id}`)
       const result = await response.json()
-      const loadedProject = result.data
+      const loadedProject = applySprintAssignments([result.data], sprints)[0]
       setSelectedProject(loadedProject)
       // Reset expanded items for new project - stages start collapsed
       setExpandedItems(new Set())
@@ -453,6 +492,15 @@ function TimelineView({
                   {module.description && (
                     <p className="text-xs text-dark-400 mt-1">{module.description}</p>
                   )}
+                  {module.sprintNames && module.sprintNames.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {module.sprintNames.map((sprintName) => (
+                        <span key={sprintName} className="rounded border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-[11px] text-red-300">
+                          Sprint: {sprintName}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium ${
                   moduleStatus === 'completed' ? 'bg-green-500/15 text-green-400' :
@@ -531,6 +579,15 @@ function TimelineView({
                             <div className="flex items-start justify-between gap-3 mb-2">
                               <div className="flex-1">
                                 <h4 className="text-sm font-semibold text-white leading-tight">{stage.name}</h4>
+                                {stage.sprintNames && stage.sprintNames.length > 0 && (
+                                  <div className="mt-1 flex flex-wrap gap-1.5">
+                                    {stage.sprintNames.map((sprintName) => (
+                                      <span key={sprintName} className="rounded border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-[11px] text-red-300">
+                                        Sprint: {sprintName}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                               <div className="flex items-center gap-2">
                                 <button
