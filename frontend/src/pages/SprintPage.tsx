@@ -9,8 +9,8 @@ interface SprintItem {
   id: number
   type: 'module' | 'stage' | 'unknown'
   project?: { id: number; name: string } | null
-  module?: { name: string; description?: string | null } | null
-  stage?: { name: string; description?: string | null } | null
+  module?: { id: number; name: string; description?: string | null; progress?: number } | null
+  stage?: { id: number; moduleId: number; name: string; description?: string | null } | null
   progress: number
 }
 
@@ -31,6 +31,31 @@ function formatDate(value: string) {
     month: 'short',
     year: 'numeric',
   })
+}
+
+function groupSprintItems(items: SprintItem[]) {
+  const groups = new Map<number, { module: SprintItem | null; stages: SprintItem[] }>()
+  const standaloneItems: SprintItem[] = []
+
+  items.forEach((item) => {
+    if (item.type === 'module' && item.module) {
+      const group = groups.get(item.module.id) || { module: null, stages: [] }
+      group.module = item
+      groups.set(item.module.id, group)
+      return
+    }
+
+    if (item.type === 'stage' && item.stage && item.module) {
+      const group = groups.get(item.module.id) || { module: null, stages: [] }
+      group.stages.push(item)
+      groups.set(item.module.id, group)
+      return
+    }
+
+    standaloneItems.push(item)
+  })
+
+  return { groups: Array.from(groups.values()), standaloneItems }
 }
 
 export default function SprintPage() {
@@ -82,6 +107,7 @@ export default function SprintPage() {
           <div className="space-y-3">
             {sprints.map((sprint) => {
               const isExpanded = expandedSprintIds.has(sprint.id)
+              const { groups, standaloneItems } = groupSprintItems(sprint.items)
               return (
                 <Card key={sprint.id} className={`overflow-hidden border-dark-700/80 ${isExpanded ? 'border-red-900/50' : ''}`}>
                   <button
@@ -125,29 +151,69 @@ export default function SprintPage() {
                         <Summary label="Projets" value={new Set(sprint.items.map((item) => item.project?.id).filter(Boolean)).size} icon={<Target size={16} />} />
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 gap-4 p-5 md:grid-cols-2">
-                      {sprint.items.map((item) => {
-                const itemName = item.type === 'module' ? item.module?.name : item.stage?.name
-                const description = item.type === 'module' ? item.module?.description : item.stage?.description
-                return (
-                  <Card key={item.id} className="p-5 transition hover:border-red-500/40">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-red-400">
-                          {item.type === 'module' ? <Layers3 size={15} /> : <CircleDashed size={15} />}
-                          {item.type} · {item.project?.name || 'Projet inconnu'}
-                        </div>
-                        <h3 className="mt-2 truncate text-lg font-semibold text-white">{itemName || 'Élément indisponible'}</h3>
-                        {description && <p className="mt-2 line-clamp-2 text-sm text-dark-400">{description}</p>}
-                      </div>
-                      <span className="text-sm font-semibold text-red-300">{item.progress}%</span>
-                    </div>
-                    <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-dark-700">
-                      <div className="h-full rounded-full bg-red-500" style={{ width: `${item.progress}%` }} />
-                    </div>
-                  </Card>
-                )
-              })}
+                    <div className="space-y-4 p-5">
+                      {groups.map((group) => {
+                        const moduleItem = group.module
+                        const moduleName = moduleItem?.module?.name || group.stages[0]?.module?.name || 'Module indisponible'
+                        const moduleDescription = moduleItem?.module?.description || group.stages[0]?.module?.description
+                        const moduleProgress = moduleItem?.progress ?? group.stages[0]?.module?.progress ?? 0
+
+                        return (
+                          <div key={moduleItem?.module?.id || group.stages[0]?.module?.id} className="rounded-lg border border-dark-700 bg-dark-900/60 p-4">
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-red-400">
+                                  <Layers3 size={15} />
+                                  Module · {moduleItem?.project?.name || group.stages[0]?.project?.name || 'Projet inconnu'}
+                                </div>
+                                <h3 className="mt-2 truncate text-lg font-semibold text-white">{moduleName}</h3>
+                                {moduleDescription && <p className="mt-2 line-clamp-2 text-sm text-dark-400">{moduleDescription}</p>}
+                              </div>
+                              <span className="text-sm font-semibold text-red-300">{moduleProgress}%</span>
+                            </div>
+                            <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-dark-700">
+                              <div className="h-full rounded-full bg-red-500" style={{ width: `${moduleProgress}%` }} />
+                            </div>
+
+                            {group.stages.length > 0 && (
+                              <div className="mt-4 space-y-2 border-l border-red-500/40 pl-4">
+                                {group.stages.map((item) => (
+                                  <div key={item.id} className="rounded border border-dark-700/80 bg-dark-800/60 p-3">
+                                    <div className="flex items-start justify-between gap-4">
+                                      <div className="min-w-0">
+                                        <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-dark-400">
+                                          <CircleDashed size={14} /> Stage
+                                        </div>
+                                        <h4 className="mt-1 truncate font-medium text-white">{item.stage?.name || 'Stage indisponible'}</h4>
+                                        {item.stage?.description && <p className="mt-1 line-clamp-2 text-sm text-dark-400">{item.stage.description}</p>}
+                                      </div>
+                                      <span className="text-sm font-semibold text-red-300">{item.progress}%</span>
+                                    </div>
+                                    <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-dark-700">
+                                      <div className="h-full rounded-full bg-red-500" style={{ width: `${item.progress}%` }} />
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+
+                      {standaloneItems.map((item) => (
+                        <Card key={item.id} className="p-5 transition hover:border-red-500/40">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-red-400">
+                                {item.type === 'module' ? <Layers3 size={15} /> : <CircleDashed size={15} />}
+                                {item.type} · {item.project?.name || 'Projet inconnu'}
+                              </div>
+                              <h3 className="mt-2 truncate text-lg font-semibold text-white">Élément indisponible</h3>
+                            </div>
+                            <span className="text-sm font-semibold text-red-300">{item.progress}%</span>
+                          </div>
+                        </Card>
+                      ))}
                     </div>
                   </div>}
                 </Card>

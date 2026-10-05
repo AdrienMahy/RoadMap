@@ -24,10 +24,11 @@ async function getSprintItems(sprintId: number) {
 
     if (item.stageId) {
       const stage = await getStageWithPoints(item.stageId)
+      const module = stage ? await getModuleWithHierarchy(stage.moduleId) : null
       const project = stage
         ? await db.select({ id: projects.id, name: projects.name }).from(projects).where(eq(projects.id, stage.projectId)).then((rows) => rows[0])
         : null
-      return { ...item, type: 'stage' as const, project, module: null, stage, progress: stage?.progress || 0 }
+      return { ...item, type: 'stage' as const, project, module, stage, progress: stage?.progress || 0 }
     }
 
     return { ...item, type: 'unknown' as const, project: null, module: null, stage: null, progress: 0 }
